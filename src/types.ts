@@ -1,0 +1,28 @@
+export interface StoryData {
+  storyFilename: string;
+  storyTitle: string;
+  story: string;
+  speechUrl: string;
+  trackUrl: string;
+  trackTitle: string;
+}
+
+export interface StoryCheckResponse {
+  exists: boolean;
+  story: StoryData | null;
+}
+
+export type TopicField = {
+  full: string[];
+  compact: string[];
+};
+
+export type View = 'grid' | 'dots' | 'text';
+
+export type SquareData = {
+  id: number;
+  fullSubject: string | null;
+  compactSubject: string | null;
+  filledTitle: string | null;
+  isPlayed: boolean;
+};

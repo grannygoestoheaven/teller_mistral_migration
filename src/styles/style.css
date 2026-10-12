@@ -1,0 +1,715 @@
+:root {
+    --music-on-background-color: #345d18;
+    --music-on-background-color: #d12709;
+    --music-off-background-color: #39423c;
+    
+    --soundscapes-on-background-color: #ffc787;
+    --soundscapes-off-background-color: transparent;
+
+    --period-color: #e4b228;  /* Default color for periods */
+    --period-color: #dad8d3;  /* Default color for periods */
+    --period-border: transparent;
+
+    --grid-background-color: rgb(43, 43, 43);
+    --grid-background-color: rgb(58, 58, 58);
+
+    --square-bg-color: transparent; /* color for squares */
+    --square-content-color: transparent; /* Default: hide text */
+    --square-hover-bg-color: #d3cdba; /* color for hovered squares */
+
+    --square-hover-content-color: transparent; /* Default: hide text */
+    --square-border: none;
+    --square-dashed-border: 1px dashed rgb(254, 245, 222);
+
+    --square-hover-dashed-border: 1px dashed hsl(0, 0%, 0%);
+    --subject-bg-color: rgb(20, 20, 20); /* Background for subject input group */
+    --subject-bg-color: rgba(0, 0, 0, 0.576); /* Background for subject input group */
+
+    --input-highlight-color: #5ECC67; /* Border color for focused input */
+    --input-highlight-color: hsl(131, 44%, 30%); /* Border color for focused input */
+    --input-highlight-color: rgb(63, 29, 137); /* Border color for focused input */
+    --input-highlight-color: hsl(0, 73%, 36%); /* Border color for focused input */
+    --input-highlight-color: #daa520; /* Border color for focused input */
+    /* #5ECC67 • #3D5253 */
+    --input-border-color: 4px hsl(131, 44%, 30%); /* Border color for input */
+    /* Grain texture */
+    --grain-texture: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none"/><rect width="100" height="100" fill="rgba(0,0,0,0.03)" filter="url(%23noise)"/></svg>');
+    
+    /* 1. Introduction to Philosophy */
+    --topic-1-base: #5D4A3E;
+    --topic-1-sub1: #7A6555;
+    --topic-1-sub2: #6E584A;
+    --topic-1-sub3: #8B7668;
+    --topic-1-sub4: #9D8A7B;
+    --topic-1-sub5: #A59485;
+    --topic-1-sub6: #B8A898;
+    --topic-1-sub7: #C4B8A8;
+    
+    /* 2. Logic & Reasoning */
+    --topic-2-base: #3A4A6B;
+    --topic-2-sub1: #4A5B7D;
+    --topic-2-sub2: #5B6D8F;
+    --topic-2-sub3: #6C7FA1;
+    --topic-2-sub4: #7D91B3;
+    --topic-2-sub5: #8E9FC4;
+    --topic-2-sub6: #A0B0D5;
+    --topic-2-sub7: #B2C1E6;
+    
+    /* 3. Metaphysics */
+    --topic-3-base: #4B3F72;
+    --topic-3-sub1: #5E5286;
+    --topic-3-sub2: #71659A;
+    --topic-3-sub3: #8478AD;
+    --topic-3-sub4: #978BC0;
+    --topic-3-sub5: #A99ED3;
+    --topic-3-sub6: #BCB1E6;
+    --topic-3-sub7: #CFC4F9;
+    
+    /* 4. Epistemology */
+    --topic-4-base: #2E5A5A;
+    --topic-4-sub1: #3D6D6D;
+    --topic-4-sub2: #4D8080;
+    --topic-4-sub3: #5D9393;
+    --topic-4-sub4: #6EA6A6;
+    --topic-4-sub5: #7FB9B9;
+    --topic-4-sub6: #90CCCC;
+    --topic-4-sub7: #A1DFDF;
+    
+    /* 5. Ethics */
+    --topic-5-base: #6B3D3D;
+    --topic-5-sub1: #8A4E4E;
+    --topic-5-sub2: #9C6060;
+    --topic-5-sub3: #AE7272;
+    --topic-5-sub4: #BF8484;
+    --topic-5-sub5: #D09696;
+    --topic-5-sub6: #E1A8A8;
+    --topic-5-sub7: #F2BBBB;
+    
+    /* 6. Political Philosophy */
+    --topic-6-base: #4A6741;
+    --topic-6-sub1: #5B7A52;
+    --topic-6-sub2: #6C8D63;
+    --topic-6-sub3: #7DA074;
+    --topic-6-sub4: #8EB385;
+    --topic-6-sub5: #9FC696;
+    --topic-6-sub6: #B0D9A7;
+    --topic-6-sub7: #C1EBB8;
+    
+    /* 7. Existential & Aesthetic Philosophy */
+    --topic-7-base: #724B5A;
+    --topic-7-sub1: #855D6B;
+    --topic-7-sub2: #986F7C;
+    --topic-7-sub3: #AB818D;
+    --topic-7-sub4: #BE939E;
+    --topic-7-sub5: #D1A5AF;
+    --topic-7-sub6: #E4B7C0;
+    --topic-7-sub7: #F7C9D1;
+}
+
+/* html:not(.loaded) * {
+    transition: none !important;
+  } */
+
+.hidden {
+    opacity: 0 !important;
+    /* visibility: hidden !important; */
+    pointer-events: none !important; /* Disables clicks immediately */
+    transition: opacity 0.5s ease-in-out !important; /* Smooth fade-out */
+  }
+  
+  .visible {
+    opacity: 1 !important;
+    /* visibility: visible !important; */
+    pointer-events: auto !important; /* Enables clicks */
+    transition: opacity 0.5s ease-in-out !important; /* Smooth fade-in */
+  }
+  
+/* Hide scrollbars for the entire page */
+html, body {
+    width: 100vw;
+    height: 100vh;
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+    -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
+    margin: 0;
+    padding: 0;
+    font-size: 0.9em;
+}
+
+/* Update body and layout */
+body {
+    display: flex; /* Use flexbox */
+    font-family: 'Inika', serif;
+    /* font-family: 'Poiret One', cursive; */
+    background-color: rgb(42, 42, 42);
+    /* background-color: rgb(47, 47, 49); */
+    /* background-color: rgb(12, 12, 12); */
+    color: #d1caca;
+    margin: 0;
+    padding: 0;
+    flex-direction: column; /* Stack children vertically */
+    justify-content: center;
+    align-items: center; /* Center children horizontally */
+}
+
+/* Header styles */
+.chat-header {
+    display: inline-block;
+    text-align: center;
+    position: relative;
+    font-size: 3em; /* Base font size for the header container */
+    z-index: 10;
+    background: none;
+    padding: 5px 25px 0px;
+    margin-top: 10px;
+    margin-bottom:15px;
+    flex-shrink: 0; /* Prevent header from shrinking */
+    line-height: 1;
+}
+
+.brand{
+    cursor: pointer;        /* h1 already sits on one line      */
+    display: inline-block;
+    margin: 0 0 0 0px;      /* keep your left indent            */
+    color: rgba(249,245,245);
+    color: #e3ddc8;
+    font-weight: 700;        /* make it stand out                */
+    user-select: none;              /* Prevent text selection */
+    -webkit-user-select: none;      /* Safari */
+    -moz-user-select: none;         /* Firefox */
+    -ms-user-select: none;          /* IE/Edge */
+    line-height: 1;
+}
+
+.beta-label{
+    font-size: xx-small;
+}
+
+.subtitle {
+    /* position: absolute; */
+    font-size: 0.25em; /* 50% of the h1 size */
+    font-family: Inika, serif;
+    opacity: 0.75;
+    margin: 0 0;
+    padding-bottom: 10px;
+    /* color: rgba(249, 245, 245, 0.9); */
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+/* Teller subtitle styling */
+#teller-subtitle {
+    text-align: center;
+    font-size: 0.5em;
+    font-family: 'Pixelify Sans', serif;
+    opacity: 0.75;
+    margin: 0 0;
+    color: rgba(249, 245, 245, 0.9);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 10px;
+    box-sizing: border-box;
+    user-select: none;              /* Prevent text selection */
+    -webkit-user-select: none;      /* Safari */
+    -moz-user-select: none;         /* Firefox */
+    -ms-user-select: none;          /* IE/Edge */
+}
+
+  /* smaller tagline that stays on same line */
+.tagline{
+    font-size:0.25em;       /* 35 % of the h1 size              */
+    font-weight:500;
+    opacity:0.4;            /* optional subtle fade             */
+}
+
+.toggle-button {
+    /* display: none; */
+    font-size: 1em;
+    border: none;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    padding: 5px 10px;
+    background-color: #353432;
+    background-color: #4a4845;
+    color: rgb(238, 235, 231);
+    opacity: 0.7;
+}
+
+.toggle-button .button {
+    text-align: center;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.pace-button {
+    font-size: 0.8em;
+    border: none;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    padding: 5px 10px;
+    background-color: #353432;
+    color: rgb(60, 57, 57);
+    opacity: 0.7;
+    font-size: 1em;
+}
+
+.music-button {
+    /* display: none; */
+    /* font-size: 1em; */
+    border: none;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    padding: 5px 10px;
+    background-color: var(--music-on-background-color);
+    /* background-color: #39423c; */
+    /* background-color: #096a28; */
+    color: rgb(218, 208, 209);
+    opacity: 0.7;
+    font-size: 1em;
+}
+
+.soundscapes-button {
+    /* display: none; */
+    font-size: 0.8em;
+    border: none;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    padding: 5px 10px;
+    /* background-color: #353432; */
+    background-color: var(--soundscapes-button-background-color);
+    color: rgb(223, 195, 198);    opacity: 0.7;
+    font-size: 1em;
+}
+
+.toggle-container {
+    position: relative;
+    display: flex;
+    /* border: 20px solid rgb(10, 10, 10); */
+    /* justify-content: center; */
+    /* align-items: center; */
+    width: 75%;
+    /* width: 35%; */
+    height: 65%;
+    overflow: hidden; /* Critical: Hide overflow for layers */
+    /* transition: none !important; */ /* Disable transitions for container */
+    transition: opacity 1s ease, visibility 1s ease; /* Smooth fade + visibility */
+  }
+
+  html.loaded .toggle-container {
+    transition: all 0.3s ease; /* Re-enable after DOM is ready */
+  }
+
+  .grid-container,
+  .loading-animation-container{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+.grid-container {   
+    position: absolute;
+    display: grid;
+    width: 100%;
+    height: 100%;
+    /* border: 1px dashed rgb(237, 230, 212, 3);
+    border: 1px solid rgb(237, 230, 212, 3); */
+    border: none;
+    border-radius: 15px;
+    background-color: var(--grid-background-color);
+    z-index: 5;
+    transition: opacity 1s ease, visibility 1s ease !important;
+}
+
+.grid-container > .square {
+    background-color: var(--square-bg-color);
+    opacity: 75%;
+    border: solid var(--square-border);
+    border-radius: 15px;
+    transition: all 750ms ease !important; /* TODO: Refactor when time allows—find why !important is needed. */
+}
+  
+.grid-container > .square:hover {
+    background-color: var(--square-hover-bg-color);
+    /* border: var(--square-hover-dashed-border); */
+    color: transparent;
+    transition: background-color, 150ms ease, color 150ms ease !important; /* TODO: Refactor when time allows—find why !important is needed. */
+}
+
+/* Hide scrollbar for Webkit browsers (Chrome, Safari, Opera) */
+.chat-history::-webkit-scrollbar {
+    display: none;
+}
+
+/* Styles for the actual text inside chatHistory */
+#chatHistory p {
+    text-align: left; /* Ensure paragraphs align left */
+    margin: 0.8em 0; /* Keep your existing margin for paragraphs */
+    word-wrap: break-word; /* Ensure words break if too long */
+    overflow-wrap: break-word; /* Modern equivalent */
+}
+
+/* New: For text fully visible (e.g., when toggled) */
+#chatHistory.text-full {
+    opacity: 1 !important;/* Full opacity */
+    /* transition: opacity 0.3s ease-in;  */
+    pointer-events: auto;
+}
+
+.chat-history {
+    top: 0; 
+    left: 0; 
+    display: flex; /* Remove flex */
+    position: relative;
+    height: 100%;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto; /* Enable scrolling */
+    color: rgb(199, 191, 191);
+    /* font-family: pixelify sans, serif; */
+    /* font-family: "Inika"; */
+    /* font-family: "Rufina", sans-serif; */
+    font-weight: 200;
+    font-style: normal;
+    font-size: 1.2em;
+    font-size: 1.6em;
+}
+
+.chat-inner {
+    display: block; /* Change to inline-block for better text handling */
+    max-width: 100ch;
+    max-height: 100vh;
+    margin: auto;
+    padding: 1rem 3rem;
+    overflow-y: auto; /* Ensure text scrolls */
+    text-align: center;
+    transition: opacity 1s ease, visibility 1s ease !important;
+  }
+
+.chat-inner::-webkit-scrollbar {
+width: 16px;
+}
+
+.chat-inner::-webkit-scrollbar-thumb {
+background-color: rgba(0, 0, 0, 0.5);
+}
+
+.chat-inner .word {
+display: inline-block;
+margin: 0 .05em;
+}
+  
+/* Style for interactive words */
+.chat-history .word {
+    display: inline;
+    cursor: pointer;
+    white-space: normal;
+    word-wrap: break-word;
+    -webkit-text-stroke: transparent;
+    text-stroke: transparent;
+    transition: -webkit-text-stroke 0.2s ease-in-out, text-stroke 0.2s ease-in-out;
+    position: relative;
+    z-index: 1;
+    padding: 0 0.1em; /* Reduced horizontal padding */
+    margin: 0 -0.1em; /* Compensate for padding to reduce word spacing */
+}
+
+/* Hover effect for words */
+.chat-history .word.highlight-word {
+    -webkit-text-stroke: 2px rgba(10, 184, 21, 0.849);
+    -webkit-text-stroke: 2px rgba(254, 152, 0);
+    text-stroke: 2px rgba(10, 184, 21, 0.849);
+    text-stroke: 2px rgb(254, 152, 0);
+    position: relative;
+    z-index: 1;
+}
+
+/* Cursor animation for end of text */
+.cursor-standby {
+    font-size: 1em;
+    color: #bca18c;
+    margin-left: 0.05em;
+    animation: blink 1s steps(1) infinite;
+    vertical-align: middle;
+}
+
+@keyframes blink {
+    from, to { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* --- NEW LOADING ANIMATION & CONTROLS STYLES --- */
+.loading-animation-container {
+    opacity: 0;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    z-index: 100;
+    overflow: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s ease !important;
+  }
+
+.loading-animation-container.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.loading-animation.blur-overlay{
+    filter: blur(1px); /* Apply blur effect to the entire loading animation */
+}
+
+.loading-animation {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    font-size: 100px;
+  }
+
+.loading-animation .period {
+    display: inline-block;
+    display: flex;
+    align-items: center;
+    opacity: 0; /* Start invisible for animation */
+    animation: period-fade 2.2s infinite ease-in-out; /* Main animation */
+    margin: 0 -0.17em;
+    font-family: 'Inika', serif;
+    font-size: 4em;
+    font-weight: bold;
+    color: var(--period-color);
+    /* border: dashed 0.5px rgba(255, 255, 255, 0.8); */
+    line-height: 0.8;
+    text-align: center;
+    line-height: match-font-size;
+}
+
+/* Animation delays for each period */
+.loading-animation .period-1 { animation-delay: 0.1s; }
+.loading-animation .period-2 { animation-delay: 0.2s; }
+.loading-animation .period-3 { animation-delay: 0.4s; }
+
+@keyframes period-fade {
+    0% { opacity: 0.2; transform: translateY(0) scale(0.9); }
+    50% { opacity: 1; transform: translateY(-3px) scale(1.2); text-shadow: 0 0 8px rgba(0,0,0,0.2); }
+    100% { opacity: 0.2; transform: translateY(0) scale(0.9); }
+}
+
+/* Input area */
+footer.chat-input-area {
+    /* width: 100%; */
+    width: 100vw;
+    max-height: auto;
+    margin: 15px auto 25px auto;
+    padding: 0 15px;
+    box-sizing: border-box;
+    background: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.form-fields-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    width: 530px;
+    /* width: 230px; */
+    /* padding: 5px; */
+    gap: 12px;
+}
+
+#story-form {
+    width: 800px;
+    gap: 10px;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.form-group {
+    margin-top: 10px;
+}
+
+/* .subject-input-group:focus-within {
+    outline: 4px solid var(--input-highlight-color);
+} */
+
+.subject-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    margin: 10px 10px;
+    box-sizing: border-box;
+    /* background: #2c2c2caf; */
+    /* background: #0c0c0c; */
+    border-radius: 25px;
+}
+
+/* Subject input specific styles */
+#subject {
+    background-color: var(--subject-bg-color, transparent);
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    min-height: 1.5em;
+    line-height: 1.2em;
+    border: none;
+    border-radius: 15px;
+    padding: 10px;
+    box-sizing: border-box;
+    font-size: 1.7em;
+    letter-spacing: 0cqmin;
+    font-family: 'Inika', serif;
+    color: rgba(245, 245, 245, 0.9);
+    /* color: #fdb900; */
+    transition: none;
+    text-align: center;
+    transition: border 0.8s ease-in-out, box-shadow 0.8s ease-in-out !important;
+    transition: 0.8s ease-in-out, box-shadow 0.8s ease-in-out !important;
+}
+
+#subject:focus {
+    border: 4px solid var(--input-highlight-color);
+    caret-color: transparent;
+    /* box-shadow: none !important; */
+}
+
+/* Focus: Highlight border (persistent) */
+#subject:focus {
+    outline: none;
+    caret-color: grey;
+    box-shadow: none !important;
+  }
+  
+/* Active: Optional click effect (temporary) */
+#subject:active {
+box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+  
+#subject::placeholder {
+    color: rgba(205, 204, 204, 0.473);
+    font-style: regular;
+    font-size: 0.9em;
+    font-weight: lighter;
+}
+
+.input-stop-button{
+    pointer-events: auto;
+    position: absolute;
+    z-index: 9999;
+    aspect-ratio: 1/1;
+    height: 50%;
+    right: 19px;
+    top: 50%;
+    bottom: 50%;
+    border: none;
+    border-radius: 8px;
+    background: #1b1a1ad0;
+    transition: 0.8s ease;
+    transform: translateY(-50%);
+}
+
+.input-stop-button:hover {
+    background-color: rgba(101, 99, 99, 0.702);
+    border: 0.2px solid rgba(255, 255, 255, 0.775);
+  }
+
+.input-stop-button:active {
+    transform: translateY(-50%) scale(0.95);
+  }
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    /* padding-top: 0.5rem; */
+    font-size: 1.2em;
+  }
+
+/* Pixel PLAY style */
+.pixel-play {
+    display: none;
+    font-family: 'Pixelify Sans', serif;
+    text-transform: uppercase;
+    font-size: 1em;
+    letter-spacing: 0.12em;
+    display: block;
+    text-align: center;
+    padding: 2px 0;
+    color: inherit;
+    line-height: 1.2;
+}
+
+/* Send button styles */
+.send-button {
+    /* visibility: hidden; */
+    width: auto;
+    border: 4px solid rgba(200, 212, 201, 0.865);
+    background-color: #1c1b1bc2;
+    background-color: #555351c2;
+    color: rgb(250, 247, 247);
+    border: none !important;
+    padding: 4px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Pixelify Sans', serif;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.85em;
+    margin: 0 4px;
+}
+
+.send-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.rewind-and-forward-buttons {
+    padding: 4px 14px;
+    display: flex;
+    /* gap: 0.5rem; */
+    border: none;
+    border: 0.3px dashed rgb(248, 190, 16);
+    border-radius: 4px;
+    color: inherit;
+    background-color: #555351c2;
+    background-color: transparent;
+    letter-spacing: 0.12em;
+    /* font-family: 'Pixelify Sans', serif; */
+    text-align: center;
+}
+.square-filled {
+  border: var(--square-dashed-border);
+}
+
+.chat-inner.blurred {
+  filter: blur(4px);
+}
+
+.loading-animation.dots-loading {
+  --period-color: #dad8d3;
+}
+
+.loading-animation.dots-orange {
+  --period-color: darkgreen;
+}

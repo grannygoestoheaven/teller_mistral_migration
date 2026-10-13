@@ -1,0 +1,59 @@
+<!--
+Combo: Systems Mindset (Predictive → GOMS → Think-Aloud)
+Topic: WebSocket
+Audience: intermediate web devs
+Time total: ~9 min
+Tone: direct, technical, friendly
+Constraints: no code
+Segment lengths: { s1: 3′, s2: 3′, s3: 3′ }
+Target task: live notifications over WebSocket
+-->
+
+# WebSocket — Systems Mindset
+
+<!-- =========================
+S1 — Predictive Processing (META / DO NOT READ)
+Prompt to LLM:
+“Frame WebSocket as a system that sets expectations and reacts to mismatches. For each phase—DNS/TLS, HTTP upgrade, open, steady messages, idle, ping/pong, close—state: expected signals, what counts as prediction error, immediate response (retry, backoff, resubscribe). 7–9 bullets, precise, no code.”
+Output: concise bullets, phase-labeled.
+========================= -->
+
+## S1 — Predictive Processing
+{{S1_SCRIPT}}
+
+{{S1_TO_S2_TRANSITION: “Expectations are set; now define operator-level actions.”}}
+
+<!-- =========================
+S2 — GOMS (META / DO NOT READ)
+Prompt to LLM:
+“Produce a GOMS model for a small realtime feature using WebSocket (live notifications).
+- Goals: connect, authenticate/authorize, subscribe, keep alive, handle backoff, close.
+- Operators: resolve URL, send headers, handle events, schedule timers, record metrics.
+- Methods: operator sequence per goal.
+- Selection rules: choose WebSocket vs SSE vs polling by directionality, frequency, infra limits.”
+Output: structured lists, compact, actionable.
+========================= -->
+
+## S2 — GOMS Model
+{{S2_SCRIPT}}
+
+{{S2_TO_S3_TRANSITION: “Finally, let’s debug out loud.”}}
+
+<!-- =========================
+S3 — Think-Aloud (META / DO NOT READ)
+Prompt to LLM:
+“Narrate diagnosing a broken WebSocket in production: symptoms (sporadic disconnects), hypotheses (LB idle timeout, missing ping, origin mismatch), evidence (Network frames, close codes, server logs, LB config), controlled experiments (shorter heartbeat, sticky sessions, path rewrite), decision points. End with a 5-step incident playbook. Short, decisive.”
+Output: first-person, crisp paragraphs + 5-step playbook.
+========================= -->
+
+## S3 — Think-Aloud Debug
+{{S3_SCRIPT}}
+
+<!-- =========================
+Objectives (META / DO NOT READ)
+- Anticipate normal vs failure signals across lifecycle.
+- Specify a task model executable by a team.
+- Run a disciplined debug loop for WebSocket issues.
+Evidence (META / DO NOT READ)
+- Provides viable playbook, correct selection rules in a novel case.
+========================= -->

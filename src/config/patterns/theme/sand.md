@@ -1,0 +1,1 @@
+- Explain the subject with the texture and fluidity of sand. Use metaphors of shifting, grains, or erosion to shape the narrative—sand is the lens, not the topic.

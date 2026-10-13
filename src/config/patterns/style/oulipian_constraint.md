@@ -1,0 +1,1 @@
+- Explain the subject under a strict Oulipian rule: No word can contain the letter 'e'. Or: Every sentence must alternate between 3 and 5 words. The constraint is the style.

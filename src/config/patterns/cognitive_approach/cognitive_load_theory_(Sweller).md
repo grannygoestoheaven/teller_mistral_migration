@@ -1,0 +1,1 @@
+- Explain the subject using Cognitive Load Theory. Focus on how to reduce extraneous load and leverage worked examples or chunking. Provide 1 concrete application.

@@ -1,0 +1,1 @@
+- Explain the subject like a corrupted VHS tape. Fragment the narrative with abrupt cuts, repeated phrases, and static-like asides. The reader should feel the instability of the medium—like the truth is glitching in and out of focus.

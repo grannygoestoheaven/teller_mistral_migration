@@ -1,0 +1,1 @@
+## Write an explanation of {subject} using rapid schema formation. Structure it into 3-5 meaningful chunks. Start by activating prior knowledge, then insert key concepts efficiently using minimal examples and contrasts. The goal is quick, intuitive understanding for someone new but sharp.

@@ -1,0 +1,1 @@
+- Explain the subject with the flow and adaptability of water. Frame ideas as currents, waves, or depth—water sets the tone, not the content.

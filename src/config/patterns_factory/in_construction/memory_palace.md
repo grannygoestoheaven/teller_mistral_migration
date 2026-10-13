@@ -1,0 +1,1 @@
+## Teach {subject} by building a memory palace. Assign each key idea to a vivid room, object, or landmark in an imaginary place. Guide the reader through it, embedding concepts in spatial memory.

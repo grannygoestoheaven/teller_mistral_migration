@@ -1,0 +1,1 @@
+## Explain {subject} using desirable difficulty. Begin with a thought-provoking question, partial story, or problem. Delay resolution to make the reader actively engage. Build understanding through effortful steps, not passive reading."

@@ -1,0 +1,1 @@
+- Explain the subject using Schema Theory. Highlight how pre-existing mental frameworks shape understanding or memory of the subject. Give 1 real-world example of schema distortion.

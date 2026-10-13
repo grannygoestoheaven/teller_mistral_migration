@@ -1,0 +1,1 @@
+- Explain the subject as a Socratic dialogue. Pose questions that guide the reader to the answer through logic and self-discovery. End with an open question.

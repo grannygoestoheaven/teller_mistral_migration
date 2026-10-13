@@ -1,0 +1,32 @@
+# File patterns for Git LFS (Large File Storage)
+*.zip filter=lfs diff=lfs merge=lfs -text
+*.ttf filter=lfs diff=lfs merge=lfs -text
+*.pdf filter=lfs diff=lfs merge=lfs -text
+*.webp filter=lfs diff=lfs merge=lfs -text
+*.flac filter=lfs diff=lfs merge=lfs -text
+*.mp3 filter=lfs diff=lfs merge=lfs -text
+*.wav filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.gif filter=lfs diff=lfs merge=lfs -text
+*.otf filter=lfs diff=lfs mergs=lfs -text
+static/fonts/retro-block-font.zip filter=lfs diff=lfs merge=lfs -text
+static/fonts/retro-block-font/RetroBlockRegular-Zpg8Z.ttf filter=lfs diff=lfs merge=lfs -text
+static/fonts/retro-block-font/misc/Important[[:space:]]Information[[:space:]]About[[:space:]]This[[:space:]]Font[[:space:]]cd[[:space:]]..
+rm[[:space:]]-rf[[:space:]]teller
+git[[:space:]]clone[[:space:]]git@github.com:grannygoestoheaven/teller.git
+cd[[:space:]]teller
+[[:space:]]Please[[:space:]]Read[[:space:]]Me[[:space:]]cd[[:space:]]..
+.pdf filter=lfs diff=lfs merge=lfs -text
+static/logos/DALL·E[[:space:]]2025-05-11[[:space:]]23.42.25[[:space:]]-[[:space:]]Create[[:space:]]a[[:space:]]detailed[[:space:]]3D[[:space:]]render[[:space:]]of[[:space:]]both[[:space:]]the[[:space:]]play[[:space:]]and[[:space:]]pause[[:space:]]icons[[:space:]]made[[:space:]]from[[:space:]]colorful[[:space:]]felt.[[:space:]]Each[[:space:]]icon[[:space:]]should[[:space:]]have[[:space:]]the[[:space:]]symbol[[:space:]](the[[:space:]]arrow[[:space:]]for[[:space:]]play[[:space:]]and[[:space:]]the[[:space:]]two.webp filter=lfs diff=lfs merge=lfs -text
+static/audio/local_ambient_tracks/01[[:space:]]-[[:space:]]Verge.flac filter=lfs diff=lfs merge=lfs -text
+static/audio/01[[:space:]]-[[:space:]]Verge.flac filter=lfs diff=lfs merge=lfs -text
+static/audio/local_ambient_tracks/04[[:space:]]-[[:space:]]Edge.flac filter=lfs diff=lfs merge=lfs -text
+static/audio/04[[:space:]]-[[:space:]]Edge.flac filter=lfs diff=lfs merge=lfs -text
+static/audio/local_ambient_tracks/07[[:space:]]Brian[[:space:]]Eno[[:space:]]-[[:space:]]CD-01[[:space:]]-[[:space:]]An[[:space:]]Ending.flac filter=lfs diff=lfs merge=lfs -text
+static/audio/07[[:space:]]Brian[[:space:]]Eno[[:space:]]-[[:space:]]CD-01[[:space:]]-[[:space:]]An[[:space:]]Ending.flac filter=lfs diff=lfs merge=lfs -text
+static/audio/Leaf_Bed filter=lfs diff=lfs merge=lfs -text
+Leaf_Bed filter=lfs diff=lfs merge=lfs -text
+*.otf filter=lfs diff=lfs merge=lfs -text
+static/fonts/retro-block-font/misc/Important[[:space:]]Information[[:space:]]About[[:space:]]This[[:space:]]Font[[:space:]]git[[:space:]]filter-repo[[:space:]]--strip-blobs-bigger-than[[:space:]]10M[[:space:]]--force[[:space:]]Please[[:space:]]Read[[:space:]]Me[[:space:]].pdf filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,1 @@
+- Explain the subject using Optimal Foraging Theory. Frame it as a cost-benefit analysis of information search, like an animal hunting for food. Use 1 analogy.

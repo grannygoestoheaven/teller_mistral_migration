@@ -1,0 +1,1 @@
+## Write a backward explanation of {subject}. Start with the conclusion or result, then unpack how to get there step by step, like reverse-engineering. Use simple terms and analogies as if teaching a curious beginner.

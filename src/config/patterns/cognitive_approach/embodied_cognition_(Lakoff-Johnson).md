@@ -1,0 +1,1 @@
+- Explain the subject using Embodied Cognition. Link abstract concepts to physical actions or sensory experiences. Use 1 metaphor (e.g., 'grasping an idea').

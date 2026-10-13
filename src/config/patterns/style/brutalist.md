@@ -1,0 +1,1 @@
+- Explain the subject with raw, unfiltered precision. No metaphors, no fluff. Use short sentences, active voice, and concrete facts. Strip it down to its mechanical essence.

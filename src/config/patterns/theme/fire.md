@@ -1,0 +1,1 @@
+- Explain the subject with the intensity and transformation of fire. Use metaphors of ignition, burning, or ashes to frame the core ideas—without ever directly mentioning fire as the subject.

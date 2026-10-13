@@ -1,0 +1,1 @@
+- Explain the subject in haiku-like brevity. Every word must earn its place. Use imagery, but sparingly—like a single brushstroke.

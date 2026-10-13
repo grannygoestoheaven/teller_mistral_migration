@@ -1,0 +1,1 @@
+- Explain the subject using Desirable Difficulty. Introduce deliberate challenges (e.g., spacing, retrieval practice, or interleaving) that enhance long-term learning. Provide 1 practical example of how to apply this to the subject.

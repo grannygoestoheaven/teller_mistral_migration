@@ -1,0 +1,1 @@
+## Teach {subject} by starting with concrete, relatable examples before introducing abstract ideas. Use real-world scenarios that make the concept feel familiar. Only define or formalize the concept once the examples are well understood.

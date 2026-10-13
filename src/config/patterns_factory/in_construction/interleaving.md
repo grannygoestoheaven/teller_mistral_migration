@@ -1,0 +1,1 @@
+## Write an educational text on {subject} using interleaving. Blend related concepts or problem types in a mixed sequence to challenge pattern recognition. Contrast ideas to highlight their boundaries and improve flexible understanding.

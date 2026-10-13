@@ -1,0 +1,1 @@
+## Explain {subject} using dual coding. Pair each concept with a vivid mental image, metaphor, or simple visual description. Alternate between brief text and accompanying imagery cues to deepen retention. Limit jargon, aim for intuitive clarity.

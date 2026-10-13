@@ -1,0 +1,1 @@
+- Explain the subject with the rhythm and cycles of leaves. Weave in metaphors of growth, shedding, or rustling to color the explanation—leaves are the backdrop, not the focus.

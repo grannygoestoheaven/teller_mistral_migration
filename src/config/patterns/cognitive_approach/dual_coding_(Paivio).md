@@ -1,0 +1,1 @@
+- Explain the subject using Dual Coding Theory. Combine verbal and visual elements in your explanation. Include 1 example where text + imagery enhance understanding.

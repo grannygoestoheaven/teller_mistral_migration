@@ -8,6 +8,7 @@ from src.schemas.tts import TtsRequest # Pydantic model for TTS request
 from src.config.settings import env_settings # Environment settings like API keys
 from src.services.utils import _format_mp3_filename # Helper function to format filenames
 
+from fastapi import HTTPException  # HTTP error responses
 from openai import OpenAI  # OpenAI API client
 from elevenlabs.client import ElevenLabs # ElevenLabs API client
 from mistralai.client import Mistral # Mistral API client
@@ -61,7 +62,7 @@ def openai_tts(story: TtsRequest, filename) -> bytes:
     except Exception as e:
         # Log the error appropriately in a real application
         print(f"Error in openai_tts: {e}")
-        return None
+        raise HTTPException(status_code=500, detail=f"OpenAI TTS failed: {e}")
     
 def local_pyttsx3_tts(story: str, filename: str = "story.wav") -> str:
     """
@@ -156,5 +157,5 @@ def mistral_tts(story: TtsRequest, filename) -> bytes:
     except Exception as e:
         # Log the error appropriately in a real application
         print(f"Error in openai_tts: {e}")
-        return None
+        raise HTTPException(status_code=500, detail=f"OpenAI TTS failed: {e}")
     return None

@@ -58,6 +58,7 @@ export function useTellerStore() {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
+  const pendingSubjectRef = useRef<string | null>(null);
   const speechTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasInitialSyncOccurredRef = useRef(false);
   const isPausedDuringDelayRef = useRef(false);
@@ -125,11 +126,9 @@ export function useTellerStore() {
   }, []);
 
   const startNewStoryProcessForm = useCallback(async () => {
-    const subjectRaw =
-      activeSquareId !== null
-        ? squares.find((s) => s.id === activeSquareId)?.compactSubject ?? inputValue
-        : inputValue;
-    let subject = subjectRaw?.trim() || 'emptiness';
+    const pending = pendingSubjectRef.current;
+    pendingSubjectRef.current = null;
+    let subject = (pending ?? inputValue).trim() || 'emptiness';
     subject = sanitizeSubject(subject);
     abortRef.current = new AbortController();
     try {
@@ -155,7 +154,7 @@ export function useTellerStore() {
       console.error('Story process failed:', err);
       smRef.current?.dispatchEvent(EventId.CANCEL);
     }
-  }, [activeSquareId, inputValue, squares]);
+  }, [inputValue]);
 
   const actions: StateMachineActions = useMemo(
     () => ({
@@ -290,6 +289,7 @@ export function useTellerStore() {
       if (!square) return;
       setActiveSquareId(squareId);
       if (square.filledTitle) {
+        pendingSubjectRef.current = square.filledTitle;
         setInputValue(square.filledTitle);
         dispatch(EventId.SQUARE_CLICKED);
       }

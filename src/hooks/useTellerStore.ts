@@ -148,6 +148,7 @@ export function useTellerStore() {
     pendingSubjectRef.current = null;
     let subject = (pending ?? inputValue).trim() || 'emptiness';
     subject = sanitizeSubject(subject);
+    abortRef.current?.abort();
     abortRef.current = new AbortController();
     try {
       const data = await fetchStory(subject, settings, abortRef.current.signal);
@@ -162,6 +163,8 @@ export function useTellerStore() {
         bgEl.loop = false;
       }
       setIsStoryVisible(false);
+      hasInitialSyncOccurredRef.current = false;
+      isPausedDuringDelayRef.current = false;
       setSquares((prev) => {
         const available = prev.filter((s) => s.filledTitle === null);
         if (available.length === 0 || !data.storyTitle) return prev;
@@ -206,7 +209,7 @@ export function useTellerStore() {
       startNewStoryProcessForm: () => {
         void startNewStoryProcessForm();
       },
-      getIsChatVisible: () => false,
+      getIsChatVisible: () => view === 'text',
       inputIsEmpty,
     }),
     [
@@ -218,6 +221,7 @@ export function useTellerStore() {
       bothTracksEnded,
       startNewStoryProcessForm,
       inputIsEmpty,
+      view,
     ]
   );
 

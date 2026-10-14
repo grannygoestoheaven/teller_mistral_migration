@@ -177,7 +177,6 @@ export class AudioStateMachine {
         this.actions.initInputAdjustments();
         break;
       case StateId.LOADING:
-        this.actions.abortProcess();
         this.actions.pauseAllAudio();
         this.actions.uiLoadingButtons();
         this.actions.removeBlurr();

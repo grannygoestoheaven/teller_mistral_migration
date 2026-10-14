@@ -194,7 +194,7 @@ export function useTellerStore() {
       wrapWordsInSpans: () => {},
       uiPausedButtons: () =>
         setButtons({ fromStartDisabled: false, playPauseDisabled: false, playPauseLabel: 'Resume' }),
-      addBlurr: () => setIsBlurred(true),
+      addBlurr: () => {},
       resumeAllAudio,
       uiPlayingButtons: () =>
         setButtons({ fromStartDisabled: false, playPauseDisabled: false, playPauseLabel: 'Pause' }),

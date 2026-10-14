@@ -110,6 +110,9 @@ export default function App() {
                   setInputValue(e.target.value);
                   dispatch(EventId.INPUT_CHANGED);
                 }}
+                onFocus={() => {
+                  if (inputValue.trim()) dispatch(EventId.INPUT_CHANGED);
+                }}
                 onBlur={() => dispatch(EventId.INPUT_DEFOCUSED)}
               />
             </div>

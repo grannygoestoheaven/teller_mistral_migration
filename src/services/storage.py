@@ -1,3 +1,4 @@
+import hashlib
 import os
 import json
 import random
@@ -91,6 +92,13 @@ class BucketClient:
         )
 
 # --- High-level backend ---
+def make_combo_id(approach: str, audience: str, length: str, **extra) -> str:
+    """Stable, fixed-length combo id: readable prefix + 8-char hash of all params."""
+    parts = [approach, audience, length] + [f"{k}={v}" for k, v in sorted(extra.items())]
+    digest = hashlib.sha256("|".join(parts).encode()).hexdigest()[:8]
+    return f"{approach}-{digest}"
+
+
 class StorageBackend:
     def __init__(self, use_bucket, settings=None):
         self.use_bucket = use_bucket
@@ -101,7 +109,7 @@ class StorageBackend:
     
     # ==== STORING FUNCTIONS =====
 
-    def save_txt_to_json_file(self, story_foldername, story_filename, story_title, tagged_story_for_tts, clean_story):
+    def save_txt_to_json_file(self, story_foldername, story_filename, combo_id, story_title, tagged_story_for_tts, clean_story):
         payload = {
             "story_foldername" : story_foldername,
             "story_filename": story_filename,
@@ -110,17 +118,17 @@ class StorageBackend:
             "clean_story": clean_story,
             "timestamp": datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
         }
-        key = f"stories/{story_foldername}/{story_filename}.json"
+        key = f"stories/{story_foldername}/{combo_id}/{story_filename}.json"
         print(f"Saving text to: {key}")
         self.client.upload_file(json.dumps(payload).encode('utf-8'), key)
         
         return self.client.generate_url(key)
 
-    def save_mp3_speech_file(self, story_foldername: str, speech_filename: str, speech_audio: bytes) -> str:
+    def save_mp3_speech_file(self, story_foldername: str, combo_id: str, speech_filename: str, speech_audio: bytes) -> str:
         """
         Saves the speech mp3 audio content to a file in the specified directory.
         """
-        key = f"stories/{story_foldername}/{speech_filename}"
+        key = f"stories/{story_foldername}/{combo_id}/{speech_filename}"
         print(f"Saving mp3 file to: {key}")
         self.client.upload_file(speech_audio, key)
         
@@ -128,42 +136,42 @@ class StorageBackend:
 
     # ==== FETCHING FUNCTIONS =====
     
-    def get_clean_text_from_json_file(self, story_filename) -> str:
+    def get_clean_text_from_json_file(self, story_filename, combo_id) -> str:
         """
         Extracts the cleaned story from the saved JSON file.
         """    
-        key = f"stories/{story_filename}/{story_filename}.json"
+        key = f"stories/{story_filename}/{combo_id}/{story_filename}.json"
         json_data = self.client.download_file(key)
         payload = json.loads(json_data)
         
         return payload["clean_story"]  # Return the actual text
 
-    def get_tagged_text_from_json_file(self, story_filename) -> str:
+    def get_tagged_text_from_json_file(self, story_filename, combo_id) -> str:
         """
         Extracts the tagged story for TTS from the saved JSON file.
         """        
-        key = f"stories/{story_filename}/{story_filename}.json"
+        key = f"stories/{story_filename}/{combo_id}/{story_filename}.json"
         json_data = self.client.download_file(key)
         payload = json.loads(json_data)
         
         return payload["tagged_story_for_tts"]  # Return the actual tagged text
     
-    def get_text_title_from_json_file(self, story_filename) -> str:
+    def get_text_title_from_json_file(self, story_filename, combo_id) -> str:
         """
         Returns clean title for a story from storage.
         """     
-        key = f"stories/{story_filename}/{story_filename}.json"
+        key = f"stories/{story_filename}/{combo_id}/{story_filename}.json"
         json_data = self.client.download_file(key)
         payload = json.loads(json_data)
         
         return payload["story_title"]  # Return the actual title
         
-    def get_speech_url(self, story_filename: str) -> str:
+    def get_speech_url(self, story_filename: str, combo_id: str) -> str:
         """
         Returns the speech URL for a story from storage.
         Returns None if the file does not exist.
         """
-        key = f"stories/{story_filename}/{story_filename}.mp3"
+        key = f"stories/{story_filename}/{combo_id}/{story_filename}.mp3"
         print(f"Retrieving filename from: {key}")
         
         file_path = str(DATA_DIR / key)

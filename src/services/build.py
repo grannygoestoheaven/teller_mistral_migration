@@ -5,7 +5,7 @@ from src.services.modes.story.subjects_creation import generate_subjects_with_mi
 from src.services.modes.story.text import generate_story_with_openai_jinja, generate_story_with_mistralai
 from src.services.modes.story.tts import openai_tts, elevenlabs_text_to_speech, mistral_tts
 from src.config.settings import env_settings, FIELDS_DIR, LOCAL_TRACKS_DIR
-from src.services.storage import StorageBackend
+from src.services.storage import StorageBackend, make_combo_id
 
 storage = StorageBackend(use_bucket=env_settings.use_bucket, settings=env_settings)
 
@@ -14,6 +14,7 @@ def build_story(subject: str, approach: str = "dual_coding", audience: str = "gr
     # store them for later use and send their data and urls to the frontend.
     story_filename = _format_text_filename(subject)
     story_foldername = _format_text_filename(subject)
+    combo_id = make_combo_id(approach, audience, length)
     # story_foldername = subject
     # story_filename = subject
     
@@ -28,9 +29,9 @@ def build_story(subject: str, approach: str = "dual_coding", audience: str = "gr
     print(f"Generated speech filename: {speech_filename}")
     
     # store files and get their paths
-    json_story_filepath = storage.save_txt_to_json_file(story_foldername, story_filename, story_title, tagged_story_for_tts, story) # store the story parameters on the server and returns the clean story file
+    json_story_filepath = storage.save_txt_to_json_file(story_foldername, story_filename, combo_id, story_title, tagged_story_for_tts, story) # store the story parameters on the server and returns the clean story file
     # print(f"Saved story JSON filepath: {json_story_filepath}")
-    speech_filepath = storage.save_mp3_speech_file(story_foldername, speech_filename, speech_audio) # store the speech audio file and returns its path
+    speech_filepath = storage.save_mp3_speech_file(story_foldername, combo_id, speech_filename, speech_audio) # store the speech audio file and returns its path
     print(f"Saved speech path: {speech_filepath}")
     
     # get the path for a random local ambient track
@@ -39,7 +40,7 @@ def build_story(subject: str, approach: str = "dual_coding", audience: str = "gr
     print(f"Selected track title: {track_title}")
     
     # Get audio urls for the payload:
-    speech_url = storage.get_speech_url(story_filename) 
+    speech_url = storage.get_speech_url(story_filename, combo_id) 
     print(f"Speech URL: {speech_url}, Track URL: {track_url}")
     
     frontend_payload = {
@@ -53,26 +54,27 @@ def build_story(subject: str, approach: str = "dual_coding", audience: str = "gr
     
     return frontend_payload
 
-def load_story(subject: str, regenerate_mp3: bool) -> dict:
+def load_story(subject: str, approach: str, audience: str, length: str, regenerate_mp3: bool) -> dict:
     # Load an existing story from stored JSON and speech files
     try:
         print(f"Loading story: {subject}")
         story_filename = _format_text_filename(subject)
         story_foldername = _format_text_filename(subject)
-        story_title = storage.get_text_title_from_json_file(story_filename)
+        combo_id = make_combo_id(approach, audience, length)
+        story_title = storage.get_text_title_from_json_file(story_filename, combo_id)
         print(f"Story filename: {story_filename}, Story title: {story_title}")
 
-        story = storage.get_clean_text_from_json_file(story_filename)
-        tagged_story_for_tts = storage.get_tagged_text_from_json_file(story_filename)  # Add this helper if needed
+        story = storage.get_clean_text_from_json_file(story_filename, combo_id)
+        tagged_story_for_tts = storage.get_tagged_text_from_json_file(story_filename, combo_id)  # Add this helper if needed
 
         # Check if MP3 exists; regenerate if missing and flag is True
-        speech_url = storage.get_speech_url(story_filename)
+        speech_url = storage.get_speech_url(story_filename, combo_id)
         
         if regenerate_mp3 and not speech_url:
             print(f"MP3 missing for {story_filename}. Regenerating...")
             speech_filename, speech_audio = openai_tts(tagged_story_for_tts, subject)  # Your TTS function
             # speech_filename, speech_audio = mistralai_tts(tagged_story_for_tts, subject)  # Your TTS function
-            speech_url = storage.save_mp3_speech_file(story_foldername, speech_filename, speech_audio)
+            speech_url = storage.save_mp3_speech_file(story_foldername, combo_id, speech_filename, speech_audio)
             
         # URLs only (no filesystem paths)
         track_url = storage.get_random_track_url(LOCAL_TRACKS_DIR)

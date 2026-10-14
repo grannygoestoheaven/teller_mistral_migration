@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from src.schemas.story import StoryRequest, StoryResponse, StoryCheckResponse
 from src.services.utils import _format_text_filename, _clean_story_title
 from src.services.build import build_story, load_story
+from src.services.storage import make_combo_id
 from src.config.settings import env_settings, BASE_DIR, DATA_DIR, DEFAULT_PROMPT_PATH, PROMPTS
 from src.services.storage import StorageBackend
 
@@ -23,6 +24,7 @@ def check_story(data: StoryRequest) -> StoryCheckResponse:
         # print(pace)
         filename = _format_text_filename(subject)
         foldername = _format_text_filename(subject)
+        combo_id = make_combo_id(data.approach, data.audience, data.length)
         # foldername = _format_text_filename(subject, pace)
         # filename = _format_text_filename(subject, pace)
         print(foldername, filename)
@@ -30,7 +32,7 @@ def check_story(data: StoryRequest) -> StoryCheckResponse:
         if storage.use_bucket:
             try:
                 # key = f"stories/{filename}/{filename}.json" # we'll have to update the path for the bucket to have a parent folder {narrative_style}
-                key = f"stories/{foldername}/{filename}.json" # we'll have to update the path for the bucket to have a parent folder {narrative_style}
+                key = f"stories/{foldername}/{combo_id}/{filename}.json" # we'll have to update the path for the bucket to have a parent folder {narrative_style}
                 storage.client.download_file(key)
                 story_exists = True
             except Exception as e:
@@ -38,7 +40,7 @@ def check_story(data: StoryRequest) -> StoryCheckResponse:
                 story_exists = False
         else:
             # json_path = DATA_DIR / "stories" / filename / f"{filename}.json" 
-            json_path = DATA_DIR / "stories" / foldername / f"{filename}.json"
+            json_path = DATA_DIR / "stories" / foldername / combo_id / f"{filename}.json"
             print(f"Checking for story at path: {json_path}")
             story_exists = json_path.exists()
             # mp3_path = DATA_DIR / "stories" / filename / f"{filename}.mp3"
@@ -46,7 +48,7 @@ def check_story(data: StoryRequest) -> StoryCheckResponse:
         if not story_exists:
             return {"exists": False, "story": None}
 
-        payload = load_story(subject, regenerate_mp3=True) # The load story function holds the condition to generate tts if missing.
+        payload = load_story(subject, data.approach, data.audience, data.length, regenerate_mp3=True) # The load story function holds the condition to generate tts if missing.
         return {"exists": True, "story": StoryResponse(**payload, by_alias=True)}
     
     except Exception as e:

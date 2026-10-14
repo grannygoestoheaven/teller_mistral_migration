@@ -22,8 +22,12 @@ async function postJson<T>(url: string, body: unknown, signal?: AbortSignal): Pr
   return response.json() as Promise<T>;
 }
 
-export function checkStory(subject: string, signal?: AbortSignal): Promise<StoryCheckResponse> {
-  return postJson<StoryCheckResponse>('/api/v1/stories/check_story', { subject }, signal);
+export function checkStory(
+  subject: string,
+  settings: StorySettings,
+  signal?: AbortSignal
+): Promise<StoryCheckResponse> {
+  return postJson<StoryCheckResponse>('/api/v1/stories/check_story', { subject, ...settings }, signal);
 }
 
 export function newStory(
@@ -43,7 +47,7 @@ export async function fetchStory(
   settings: StorySettings,
   signal?: AbortSignal
 ): Promise<StoryData> {
-  const { exists, story } = await checkStory(subject, signal);
+  const { exists, story } = await checkStory(subject, settings, signal);
   if (exists && story) return story;
   return newStory(subject, settings, signal);
 }

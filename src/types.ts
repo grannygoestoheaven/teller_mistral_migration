@@ -26,3 +26,19 @@ export type SquareData = {
   filledTitle: string | null;
   isPlayed: boolean;
 };
+
+export type Approach = 'dual_coding' | 'desirable_difficulty' | 'embodied_cognition';
+export type Audience = 'kids' | 'grown-ups';
+export type StoryLength = 'short' | 'long';
+
+export interface StorySettings {
+  approach: Approach;
+  audience: Audience;
+  length: StoryLength;
+}
+
+export const DEFAULT_SETTINGS: StorySettings = {
+  approach: 'dual_coding',
+  audience: 'grown-ups',
+  length: 'long',
+};

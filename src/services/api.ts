@@ -1,4 +1,4 @@
-import type { StoryCheckResponse, StoryData } from '../types';
+import type { StoryCheckResponse, StoryData, StorySettings } from '../types';
 
 export function sanitizeSubject(subject: string): string {
   return subject
@@ -28,20 +28,22 @@ export function checkStory(subject: string, signal?: AbortSignal): Promise<Story
 
 export function newStory(
   subject: string,
+  settings: StorySettings,
   signal?: AbortSignal
 ): Promise<StoryData> {
   return postJson<StoryData>(
     '/api/v1/stories/new_story',
-    { subject, narrativeStyle: null, difficulty: null },
+    { subject, ...settings },
     signal
   );
 }
 
 export async function fetchStory(
   subject: string,
+  settings: StorySettings,
   signal?: AbortSignal
 ): Promise<StoryData> {
   const { exists, story } = await checkStory(subject, signal);
   if (exists && story) return story;
-  return newStory(subject, signal);
+  return newStory(subject, settings, signal);
 }

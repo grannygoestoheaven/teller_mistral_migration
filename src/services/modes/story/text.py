@@ -11,20 +11,29 @@ from jinja2 import Template
 from src.config.settings import env_settings
 from src.config.pacing_engine_functions import _apply_silence_tags, silence_map_variations_short_openai_tts, silence_map_elevenlabs_tts, silence_map_variations_voxtral_tts
 from src.services.utils import _clean_story_text, _remove_silence_tags, _format_text_filename, _clean_story_title
+from src.config.settings import PROMPTS_DIR
+
+COGNITIVE_PATTERNS = {
+    "dual_coding": PROMPTS_DIR / "cognitive" / "dual_coding.md",
+    "desirable_difficulty": PROMPTS_DIR / "cognitive" / "desirable_difficulty.md",
+    "embodied_cognition": PROMPTS_DIR / "cognitive" / "embodied_cognition.md",
+}
+
+LENGTH_TOKENS = {"short": 400, "long": 1500}
 
 mistral_client = Mistral(api_key=env_settings.mistral_api_key)
 openai_client = OpenAI(api_key=env_settings.openai_api_key)
 
-def generate_story_with_mistralai(subject, temperature: None, length: None, narrative_style: None, difficulty: None) -> tuple[str, str]:
-    print("entering Mistral story: ", subject, narrative_style, difficulty)
+def generate_story_with_mistralai(subject, temperature=0.2, length="long", approach="dual_coding", audience="grown-ups") -> tuple[str, str]:
+    print("entering Mistral story: ", subject, approach, audience, length)
     try:
         # 1. Read the prompt template from the file
-        with open(narrative_style, "r") as f:
+        with open(COGNITIVE_PATTERNS[approach], "r") as f:
             print("Opened narrative style file successfully.")
             narrative_style_template = Template(f.read())
             narrative_style_rendered = narrative_style_template.render(     
                 subject = subject,
-                difficulty = difficulty
+                audience = audience
             )
 
         print(f" Let's see : {narrative_style_rendered[:50]}")
@@ -39,13 +48,13 @@ def generate_story_with_mistralai(subject, temperature: None, length: None, narr
                 },
                 {
                     # "content": f"generate a 1050 char MAXIMUM text about {subject}.",
-                    "content": f"generate a {length} char MAXIMUM text about {subject}.",
+                    "content": f"generate a {LENGTH_TOKENS.get(length, 1500)} tokens MAXIMUM text about {subject}.",
                     # "content": f"generate a 600 char MAXIMUM text about {subject}.",
                     "role": "user"
                 },
                 
             ],
-            max_tokens=length,
+            max_tokens=LENGTH_TOKENS.get(length, 1500),
             # temperature=0.2,
             temperature=temperature,
             presence_penalty=1.2,

@@ -60,20 +60,12 @@ def check_story(data: StoryRequest) -> StoryCheckResponse:
 @router.post("/new_story", response_model = StoryResponse)
 def new_story(data: StoryRequest) -> StoryResponse:
     try:
-        subject = data.subject # str
-        temperature = data.temperature or 0.3 # float
-        # pace = data.pace # bool
-        length = data.length or 1500 # int defining the max_tokens for the story generation. We can adjust it according to the desired story length and the model's token limits.
-        narrative_style = data.narrative_style or DEFAULT_PROMPT_PATH
-        difficulty = data.difficulty or "beginner"
-        # difficulty = data.difficulty or "intermediate"
-        # difficulty = data.difficulty or "expert"
-        
-        # print(f"pace value : {pace}")
-        print(f"Hello Server {data.subject}")  # Debug print to verify subject
-
-        # payload = build_story(subject, pace, narrative_style, difficulty) # the build story function generates both text then sends it to tts.
-        payload = build_story(subject, temperature, length, narrative_style, difficulty) # the build story function generates both text then sends it to tts.
+        subject = data.subject
+        approach = data.approach
+        audience = data.audience
+        length = data.length
+        print(f"Hello Server {data.subject}")
+        payload = build_story(subject, approach=approach, audience=audience, length=length) # the build story function generates both text then sends it to tts.
         # print(f"Payload from build_story: {payload}")  # Debug print to verify payload
         return StoryResponse(**payload, by_alias=True)
     

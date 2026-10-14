@@ -4,6 +4,7 @@ import { useTellerStore } from './hooks/useTellerStore';
 import { SubjectGrid } from './components/SubjectGrid';
 import { LoadingDots } from './components/LoadingDots';
 import { StoryText } from './components/StoryText';
+import { SettingsPanel } from './components/SettingsPanel';
 
 export default function App() {
   const teller = useTellerStore();
@@ -27,6 +28,8 @@ export default function App() {
     cycleTopic,
     handleSquareMouseDown,
     handleSquareMouseEnter,
+    settings,
+    setSettings,
   } = teller;
 
   useEffect(() => {
@@ -82,6 +85,8 @@ export default function App() {
         <audio id="backgroundAudio" preload="auto" loop ref={backgroundRef} />
         <div id="story-title-display" className="story-title-display"></div>
       </div>
+
+      <SettingsPanel settings={settings} onChange={setSettings} />
 
       <footer className="chat-input-area">
         <form

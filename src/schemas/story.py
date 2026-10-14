@@ -4,13 +4,11 @@ from typing import Optional
 # text and audio schemas request
 class StoryRequest(BaseModel):
     subject: str
-    # pace: Optional[bool] = False
-    temperature: Optional[float] = 0.2
-    length: Optional[int] = None
-    narrative_style: str | None = None
-    difficulty: str | None = None
+    approach: str = "dual_coding"   # dual_coding | desirable_difficulty | embodied_cognition
+    audience: str = "grown-ups"     # kids | grown-ups
+    length: str = "long"           # short | long
 
-# text and audio schemas response
+
 class StoryResponse(BaseModel):
     story_filename: str = Field(alias="storyFilename")  # raw filename
     story_title: str = Field(alias="storyTitle")        # cleaned title   

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AudioStateMachine, EventId, type StateMachineActions } from '../state/AudioStateMachine';
 import { defaultFields } from '../fields/defaultFields';
 import { fetchStory, sanitizeSubject } from '../services/api';
-import type { StoryData, View } from '../types';
+import type { StoryData, View, StorySettings } from '../types';
+import { DEFAULT_SETTINGS } from '../types';
 
 export const SQUARES_PER_WIDTH = 5;
 const SPEECH_START_DELAY_MS = 5000;
@@ -51,6 +52,23 @@ export function useTellerStore() {
   const [isBlurred, setIsBlurred] = useState(false);
   const [dotColor, setDotColor] = useState<DotColor>('loading');
   const [isMusicMuted, setIsMusicMuted] = useState(false);
+  const [settings, setSettingsState] = useState<StorySettings>(() => {
+    try {
+      const raw = localStorage.getItem('teller_settings');
+      return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS;
+    } catch {
+      return DEFAULT_SETTINGS;
+    }
+  });
+
+  const setSettings = useCallback((next: StorySettings) => {
+    setSettingsState(next);
+    try {
+      localStorage.setItem('teller_settings', JSON.stringify(next));
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
   const [activeSquareId, setActiveSquareId] = useState<number | null>(null);
 
   const speechRef = useRef<HTMLAudioElement | null>(null);
@@ -132,7 +150,7 @@ export function useTellerStore() {
     subject = sanitizeSubject(subject);
     abortRef.current = new AbortController();
     try {
-      const data = await fetchStory(subject, abortRef.current.signal);
+      const data = await fetchStory(subject, settings, abortRef.current.signal);
       setStory(data);
       const speechEl = speechRef.current;
       if (speechEl && data.speechUrl) {
@@ -154,7 +172,7 @@ export function useTellerStore() {
       console.error('Story process failed:', err);
       smRef.current?.dispatchEvent(EventId.CANCEL);
     }
-  }, [inputValue]);
+  }, [inputValue, settings]);
 
   const actions: StateMachineActions = useMemo(
     () => ({
@@ -343,5 +361,7 @@ export function useTellerStore() {
     topicIndex,
     handleSquareMouseDown,
     handleSquareMouseEnter,
+    settings,
+    setSettings,
   };
 }

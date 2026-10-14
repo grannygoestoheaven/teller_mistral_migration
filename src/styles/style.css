@@ -730,3 +730,44 @@ box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
   grid-template-columns: repeat(5, 1fr);
   grid-template-rows: repeat(5, 1fr);
 }
+
+/* Settings panel (narrative combo) */
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.settings-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.settings-button {
+  font-family: 'Silkscreen', monospace;
+  font-size: 0.55em;
+  letter-spacing: 1px;
+  color: rgba(227, 221, 200, 0.25);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.settings-button:hover {
+  color: rgba(227, 221, 200, 0.6);
+}
+
+.settings-button.lit {
+  color: #e3ddc8;
+  border-color: rgba(227, 221, 200, 0.4);
+}
+
+.settings-button svg {
+  display: block;
+}

@@ -90,6 +90,7 @@ export function StoryText({ story, visible, blurred, onWordsSelected, wrapKey }:
         {words.map((word, i) => (
           <span key={i} className="word">
             {word}
+            {i < words.length - 1 ? ' ' : ''}
           </span>
         ))}
       </div>

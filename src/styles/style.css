@@ -416,7 +416,7 @@ margin: 0 .05em;
     word-wrap: break-word;
     -webkit-text-stroke: transparent;
     text-stroke: transparent;
-    transition: -webkit-text-stroke 0.2s ease-in-out, text-stroke 0.2s ease-in-out;
+    transition: -webkit-text-stroke 40ms ease-out, text-stroke 40ms ease-out;
     position: relative;
     z-index: 1;
     padding: 0 0.1em; /* Reduced horizontal padding */

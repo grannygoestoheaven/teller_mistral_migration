@@ -19,7 +19,7 @@ COGNITIVE_PATTERNS = {
     "embodied_cognition": PROMPTS_DIR / "cognitive" / "embodied_cognition.md",
 }
 
-LENGTH_TOKENS = {"short": 400, "long": 1500}
+LENGTH_TOKENS = {"short": 100, "long": 250}
 
 mistral_client = Mistral(api_key=env_settings.mistral_api_key)
 openai_client = OpenAI(api_key=env_settings.openai_api_key)
@@ -48,13 +48,13 @@ def generate_story_with_mistralai(subject, temperature=0.2, length="long", appro
                 },
                 {
                     # "content": f"generate a 1050 char MAXIMUM text about {subject}.",
-                    "content": f"generate a {LENGTH_TOKENS.get(length, 1500)} tokens MAXIMUM text about {subject}.",
+                    "content": f"generate a {LENGTH_TOKENS.get(length, 250)} tokens MAXIMUM text about {subject}.",
                     # "content": f"generate a 600 char MAXIMUM text about {subject}.",
                     "role": "user"
                 },
                 
             ],
-            max_tokens=LENGTH_TOKENS.get(length, 1500),
+            max_tokens=LENGTH_TOKENS.get(length, 250),
             # temperature=0.2,
             temperature=temperature,
             presence_penalty=1.2,

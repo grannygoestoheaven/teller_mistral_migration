@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AudioStateMachine, EventId, type StateMachineActions } from '../state/AudioStateMachine';
+import { AudioStateMachine, EventId, StateId, type StateMachineActions } from '../state/AudioStateMachine';
 import { defaultFields } from '../fields/defaultFields';
 import { fetchStory, sanitizeSubject } from '../services/api';
 import type { StoryData, View, StorySettings } from '../types';
@@ -172,6 +172,7 @@ export function useTellerStore() {
         return prev.map((s) => (s.id === target.id ? { ...s, filledTitle: data.storyTitle } : s));
       });
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       console.error('Story process failed:', err);
       smRef.current?.dispatchEvent(EventId.CANCEL);
     }
@@ -209,7 +210,6 @@ export function useTellerStore() {
       startNewStoryProcessForm: () => {
         void startNewStoryProcessForm();
       },
-      getIsChatVisible: () => view === 'text',
       inputIsEmpty,
     }),
     [
@@ -235,7 +235,10 @@ export function useTellerStore() {
   }
 
   const dispatch = useCallback((eventId: EventId) => {
-    smRef.current?.dispatchEvent(eventId);
+    const sm = smRef.current;
+    if (!sm) return;
+    sm.dispatchEvent(eventId);
+    setStateMachineState(StateId[sm.stateId]);
   }, []);
 
   useEffect(() => {

@@ -105,7 +105,11 @@ export default function App() {
                   setInputValue(e.target.value);
                   dispatch(EventId.INPUT_CHANGED);
                 }}
-                onBlur={() => dispatch(EventId.INPUT_DEFOCUSED)}
+                onBlur={(e) => {
+                  const next = e.relatedTarget as Node | null;
+                  if (next && e.currentTarget.form?.contains(next)) return;
+                  dispatch(EventId.INPUT_DEFOCUSED);
+                }}
               />
             </div>
             <div className="controls">

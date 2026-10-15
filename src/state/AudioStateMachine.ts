@@ -46,7 +46,6 @@ export interface StateMachineActions {
   textView(): void;
   uiReadyButtons(): void;
   startNewStoryProcessForm(): void;
-  getIsChatVisible(): boolean;
   inputIsEmpty(): boolean;
 }
 
@@ -123,7 +122,7 @@ export class AudioStateMachine {
           this.actions.resumeAllAudio();
           this.transitionTo(StateId.PLAYING);
         } else if (eventId === EventId.INPUT_DEFOCUSED) {
-          if (!this.actions.getIsChatVisible()) this.transitionTo(StateId.IDLE);
+          this.transitionTo(StateId.IDLE);
         } else if (eventId === EventId.TOGGLE_PAUSE_RESUME) {
           if (!this.actions.inputIsEmpty()) {
             this.actions.startNewStoryProcessForm();

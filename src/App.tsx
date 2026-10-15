@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { EventId } from './state/AudioStateMachine';
 import { useTellerStore } from './hooks/useTellerStore';
 import { SubjectGrid } from './components/SubjectGrid';
@@ -31,6 +31,8 @@ export default function App() {
     settings,
     setSettings,
   } = teller;
+
+  const suppressDefocusRef = useRef(false);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -91,6 +93,12 @@ export default function App() {
       <footer className="chat-input-area">
         <form
           id="storyForm"
+          onPointerDown={(e) => {
+            const target = e.target as HTMLElement;
+            suppressDefocusRef.current =
+              target !== e.currentTarget &&
+              !!target.closest('button, select, input:not(#subject)');
+          }}
           onSubmit={(e) => {
             e.preventDefault();
             dispatch(EventId.FORM_SUBMITTED);
@@ -115,6 +123,10 @@ export default function App() {
                 }}
                 onBlur={(e) => {
                   const next = e.relatedTarget as Node | null;
+                  if (suppressDefocusRef.current) {
+                    suppressDefocusRef.current = false;
+                    return;
+                  }
                   if (next && e.currentTarget.form?.contains(next)) return;
                   dispatch(EventId.INPUT_DEFOCUSED);
                 }}

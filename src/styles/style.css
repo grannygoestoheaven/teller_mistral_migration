@@ -571,7 +571,10 @@ footer.chat-input-area {
     overflow: hidden;
     min-height: 1.5em;
     line-height: 1.2em;
-    border: none;
+    /* Reserve the focus border space at all times: only the color changes on
+       focus, so the layout never shifts. Border was previously added on :focus,
+       growing the input by 8px and pushing the centered layout upwards. */
+    border: 4px solid transparent;
     border-radius: 15px;
     padding: 10px;
     box-sizing: border-box;
@@ -587,7 +590,7 @@ footer.chat-input-area {
 }
 
 #subject:focus {
-    border: 4px solid var(--input-highlight-color);
+    border-color: var(--input-highlight-color);
     caret-color: transparent;
     /* box-shadow: none !important; */
 }

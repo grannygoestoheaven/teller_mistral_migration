@@ -1,19 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { EventId } from './state/AudioStateMachine';
 import { useTellerStore } from './hooks/useTellerStore';
 import { SubjectGrid } from './components/SubjectGrid';
 import { LoadingDots } from './components/LoadingDots';
 import { StoryText } from './components/StoryText';
-import { SettingsPanel } from './components/SettingsPanel';
+import { ProgressBar } from './components/ProgressBar';
+import './components/ProgressBar.css';
 
 export default function App() {
   const teller = useTellerStore();
   const {
     view,
+    story,
     inputValue,
     setInputValue,
     squares,
-    story,
     buttons,
     isBlurred,
     dotColor,
@@ -28,9 +29,12 @@ export default function App() {
     cycleTopic,
     handleSquareMouseDown,
     handleSquareMouseEnter,
-    settings,
-    setSettings,
+    seekToFraction,
+    outroDone,
+    inputRef,
   } = teller;
+
+  const suppressDefocusRef = useRef(false);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -76,21 +80,26 @@ export default function App() {
           onWordsSelected={(title) => {
             setInputValue(title);
             dispatch(EventId.INPUT_CHANGED);
+            inputRef.current?.focus();
           }}
         />
       </div>
 
       <div className="audio-player-container" id="audioPlayerContainer">
         <audio id="speechAudio" preload="auto" crossOrigin="anonymous" ref={speechRef} />
-        <audio id="backgroundAudio" preload="auto" loop ref={backgroundRef} />
+        <audio id="backgroundAudio" preload="auto" ref={backgroundRef} />
         <div id="story-title-display" className="story-title-display"></div>
       </div>
-
-      <SettingsPanel settings={settings} onChange={setSettings} />
 
       <footer className="chat-input-area">
         <form
           id="storyForm"
+          onPointerDown={(e) => {
+            const target = e.target as HTMLElement;
+            suppressDefocusRef.current =
+              target !== e.currentTarget &&
+              !!target.closest('button, select, input:not(#subject)');
+          }}
           onSubmit={(e) => {
             e.preventDefault();
             dispatch(EventId.FORM_SUBMITTED);
@@ -101,6 +110,7 @@ export default function App() {
               <input
                 type="text"
                 id="subject"
+                ref={inputRef}
                 className="fill space"
                 name="subject"
                 placeholder="Enter a subject, ex: 'Quantum Physics'"
@@ -113,9 +123,18 @@ export default function App() {
                 onFocus={() => {
                   if (inputValue.trim()) dispatch(EventId.INPUT_CHANGED);
                 }}
-                onBlur={() => dispatch(EventId.INPUT_DEFOCUSED)}
+                onBlur={(e) => {
+                  const next = e.relatedTarget as Node | null;
+                  if (suppressDefocusRef.current) {
+                    suppressDefocusRef.current = false;
+                    return;
+                  }
+                  if (next && e.currentTarget.form?.contains(next)) return;
+                  dispatch(EventId.INPUT_DEFOCUSED);
+                }}
               />
             </div>
+            <ProgressBar audioRef={speechRef} backgroundRef={backgroundRef} onSeek={seekToFraction} outroDone={outroDone} />
             <div className="controls">
               <button
                 type="button"
@@ -127,6 +146,7 @@ export default function App() {
               <button
                 type="button"
                 className="send-button pixel-play"
+                disabled={!story}
                 onClick={() => dispatch(EventId.FROM_START_CLICKED)}
               >
                 Replay

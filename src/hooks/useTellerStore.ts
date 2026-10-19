@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AudioStateMachine, EventId, type StateMachineActions } from '../state/AudioStateMachine';
+import { AudioStateMachine, EventId, StateId, type StateMachineActions } from '../state/AudioStateMachine';
 import { defaultFields } from '../fields/defaultFields';
 import { fetchStory, sanitizeSubject } from '../services/api';
 import type { StoryData, View, StorySettings } from '../types';
@@ -7,6 +7,8 @@ import { DEFAULT_SETTINGS } from '../types';
 
 export const SQUARES_PER_WIDTH = 5;
 const SPEECH_START_DELAY_MS = 5000;
+const OUTRO_HOLD_MS = 30000; // hold music 30s after speech ends
+const FADE_OUT_MS = 5000; // fade music to silence
 
 export interface Square {
   id: number;
@@ -50,6 +52,8 @@ export function useTellerStore() {
     playPauseLabel: 'Start',
   });
   const [isBlurred, setIsBlurred] = useState(false);
+  // Mirrors outroDoneRef for components (progress bar reset).
+  const [outroDone, setOutroDone] = useState(false);
   const [dotColor, setDotColor] = useState<DotColor>('loading');
   const [isMusicMuted, setIsMusicMuted] = useState(false);
   const [settings, setSettingsState] = useState<StorySettings>(() => {
@@ -76,6 +80,9 @@ export function useTellerStore() {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
+  // Set after clearOutroTimers is defined; lets earlier-declared callbacks
+  // (resetAllAudio, abortProcess) cancel a pending outro.
+  const clearOutroTimersRef = useRef<(() => void) | null>(null);
   const pendingSubjectRef = useRef<string | null>(null);
   const speechTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasInitialSyncOccurredRef = useRef(false);
@@ -104,18 +111,34 @@ export function useTellerStore() {
   }, []);
 
   const resumeAllAudio = useCallback(() => {
-    backgroundRef.current?.play();
+    const bg = backgroundRef.current;
+    if (bg && !outroDoneRef.current) {
+      if (bg.volume < 0.03) bg.volume = 0.03; // undo any incomplete fade
+      bg.play().catch(() => undefined);
+    }
+    // outroDone: playback is over; resume only restarts the story, not music
     if (isPausedDuringDelayRef.current) {
       delaySpeechStart(remainingDelayRef.current);
       isPausedDuringDelayRef.current = false;
     } else if (speechRef.current && !speechRef.current.ended) {
-      speechRef.current.play();
+      speechRef.current.play().catch(() => undefined);
     }
   }, []);
 
   const resetAllAudio = useCallback(() => {
+    clearOutroTimersRef.current?.();
+    outroDoneRef.current = false; // full replay re-arms music
+    setOutroDone(false);
     if (speechRef.current) speechRef.current.currentTime = 0;
-    if (backgroundRef.current) backgroundRef.current.currentTime = 0;
+    if (backgroundRef.current) {
+      backgroundRef.current.muted = false; // release the fade's mute lock
+      backgroundRef.current.currentTime = 0;
+      backgroundRef.current.volume = 0.03; // undo any fade
+    }
+    // Re-arm the 5s speech intro so replay starts music alone first.
+    hasInitialSyncOccurredRef.current = false;
+    isPausedDuringDelayRef.current = true;
+    remainingDelayRef.current = SPEECH_START_DELAY_MS;
   }, []);
 
   const delaySpeechStart = useCallback((ms: number = SPEECH_START_DELAY_MS) => {
@@ -139,9 +162,90 @@ export function useTellerStore() {
     delaySpeechStart();
   }, [delaySpeechStart]);
 
-  const bothTracksEnded = useCallback(() => {
-    return !!speechRef.current?.ended && !!backgroundRef.current?.ended;
+  const fadeOutRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const outroTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // True once the outro fade has fully completed (music paused at 0 volume).
+  const outroDoneRef = useRef(false);
+
+  const clearOutroTimers = useCallback(() => {
+    if (fadeOutRef.current) {
+      clearInterval(fadeOutRef.current);
+      fadeOutRef.current = null;
+    }
+    if (outroTimeoutRef.current) {
+      clearTimeout(outroTimeoutRef.current);
+      outroTimeoutRef.current = null;
+    }
   }, []);
+  clearOutroTimersRef.current = clearOutroTimers;
+
+  // Fade the background track to 0 over FADE_OUT_MS using a stepped ramp
+  // (plain <audio> volume has no native ramp; Web Audio API is the future
+  // pro path for this).
+  const fadeOutBackground = useCallback((ms: number) => {
+    const bg = backgroundRef.current;
+    if (!bg) return;
+    if (fadeOutRef.current) clearInterval(fadeOutRef.current);
+    const startVolume = bg.volume;
+    const steps = 20;
+    const stepMs = ms / steps;
+    let step = 0;
+    fadeOutRef.current = setInterval(() => {
+      step += 1;
+      const bgNow = backgroundRef.current;
+      if (!bgNow) {
+        if (fadeOutRef.current) clearInterval(fadeOutRef.current);
+        fadeOutRef.current = null;
+        return;
+      }
+      bgNow.volume = Math.max(0, startVolume * (1 - step / steps));
+      if (step >= steps) {
+        // Authoritative stop — triple lock: muted + volume 0 + pause.
+        // `muted` is a hard kill switch independent of volume: even if an
+        // unknown code path restores volume and plays, a muted element is
+        // silent. Only explicit user intents (Replay, backward seek) unmute.
+        bgNow.muted = true;
+        bgNow.pause();
+        bgNow.volume = 0;
+        outroDoneRef.current = true; // music must not resume after the fade
+        setOutroDone(true);
+        if (fadeOutRef.current) clearInterval(fadeOutRef.current);
+        fadeOutRef.current = null;
+      }
+    }, stepMs);
+  }, []);
+
+  // End of the full playback (speech + outro finished): restore music
+  // volume and keep both tracks where they are so the user can still seek
+  // backward or replay. No reinitialization.
+  // End of the full playback (speech + outro finished): restore music
+  // volume for the next run and set the button back to Play. The button's
+  // value text does a quick fade out then in. No reinitialization.
+  const endOfPlayback = useCallback(() => {
+    clearOutroTimersRef.current?.();
+    outroDoneRef.current = true;
+    setOutroDone(true);
+    // Music stays paused at 0 volume. Volume is restored only by an explicit
+    // user action (resetAllAudio on Replay, or a backward seek).
+    // quick fade of the button value: out, swap to Play, in
+    setButtons({ fromStartDisabled: false, playPauseDisabled: false, playPauseLabel: '' });
+    setTimeout(() => {
+      setButtons({ fromStartDisabled: false, playPauseDisabled: false, playPauseLabel: 'Play' });
+    }, 250);
+  }, []);
+
+  const beginOutro = useCallback(() => {
+    // Playback ends 10s after speech ends: hold, then fade music 5s, then done.
+    clearOutroTimers();
+    outroTimeoutRef.current = setTimeout(() => {
+      outroTimeoutRef.current = null;
+      fadeOutBackground(FADE_OUT_MS);
+      outroTimeoutRef.current = setTimeout(() => {
+        outroTimeoutRef.current = null;
+        smRef.current?.dispatchEvent(EventId.MUSIC_OVER);
+      }, FADE_OUT_MS);
+    }, OUTRO_HOLD_MS);
+  }, [clearOutroTimers, fadeOutBackground]);
 
   const startNewStoryProcessForm = useCallback(async () => {
     const pending = pendingSubjectRef.current;
@@ -172,6 +276,7 @@ export function useTellerStore() {
         return prev.map((s) => (s.id === target.id ? { ...s, filledTitle: data.storyTitle } : s));
       });
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       console.error('Story process failed:', err);
       smRef.current?.dispatchEvent(EventId.CANCEL);
     }
@@ -202,14 +307,16 @@ export function useTellerStore() {
       uiPlayingButtons: () =>
         setButtons({ fromStartDisabled: false, playPauseDisabled: false, playPauseLabel: 'Pause' }),
       orangeDots: () => setDotColor('orange'),
-      bothTracksEnded,
+      endOfPlayback,
+      playbackHasEnded: () => outroDoneRef.current,
+      beginOutro,
+      clearOutroTimers,
       textView: () => setView('text'),
       uiReadyButtons: () =>
         setButtons({ fromStartDisabled: true, playPauseDisabled: false, playPauseLabel: 'Start' }),
       startNewStoryProcessForm: () => {
         void startNewStoryProcessForm();
       },
-      getIsChatVisible: () => view === 'text',
       inputIsEmpty,
     }),
     [
@@ -218,7 +325,8 @@ export function useTellerStore() {
       resetAllAudio,
       setUpAndStartAllAudio,
       resumeAllAudio,
-      bothTracksEnded,
+      beginOutro,
+      clearOutroTimers,
       startNewStoryProcessForm,
       inputIsEmpty,
       view,
@@ -235,7 +343,10 @@ export function useTellerStore() {
   }
 
   const dispatch = useCallback((eventId: EventId) => {
-    smRef.current?.dispatchEvent(eventId);
+    const sm = smRef.current;
+    if (!sm) return;
+    sm.dispatchEvent(eventId);
+    setStateMachineState(StateId[sm.stateId]);
   }, []);
 
   useEffect(() => {
@@ -254,10 +365,64 @@ export function useTellerStore() {
   useEffect(() => {
     const bg = backgroundRef.current;
     if (!bg) return;
-    const onEnded = () => dispatch(EventId.MUSIC_OVER);
+    // The music track's natural end is NOT the end of playback — the outro
+    // sequence (hold + fade) owns that. Ignore the raw ended event; the outro
+    // dispatches MUSIC_OVER itself when it completes.
+    const onEnded = () => {
+      if (outroDoneRef.current) return; // already handled by the outro
+      if (outroTimeoutRef.current || fadeOutRef.current) return; // outro running: its timer decides
+      dispatch(EventId.MUSIC_OVER);
+    };
     bg.addEventListener('ended', onEnded);
     return () => bg.removeEventListener('ended', onEnded);
   }, [dispatch]);
+
+  const seekToFraction = useCallback((fraction: number) => {
+    const bg = backgroundRef.current;
+    const speech = speechRef.current;
+    // The story timeline is speech.duration + 5s intro (music starts at 0,
+    // speech joins at +5s). fraction maps to that timeline, not the music
+    // track length.
+    const speechEnded = !!speech?.ended;
+    // Going back in time after the speech ended (outro running or finished):
+    // cancel the outro, restore music volume, resume playback. Setting
+    // currentTime below already clears the element's `ended` flag.
+    if (speechEnded && fraction < 1) {
+      // Explicit backward seek after the story ended: this is user intent to
+      // replay from a position — revive the music even if the outro finished.
+      clearOutroTimersRef.current?.();
+      outroDoneRef.current = false;
+      setOutroDone(false);
+      if (bg) {
+        bg.muted = false; // release the fade's mute lock
+        bg.volume = 0.03; // undo fade
+        bg.play().catch(() => undefined);
+      }
+    }
+    if (
+      speech &&
+      speech.duration &&
+      Number.isFinite(speech.duration) &&
+      bg
+    ) {
+      // SAME timeline as the progress bar: intro + speech + outro hold + fade.
+      const total =
+        SPEECH_START_DELAY_MS / 1000 + speech.duration + OUTRO_HOLD_MS / 1000 + FADE_OUT_MS / 1000;
+      const t = fraction * total;
+      bg.currentTime = Math.min(bg.duration, t);
+      const speechT = t - SPEECH_START_DELAY_MS / 1000;
+      speech.currentTime = speechT <= 0 ? 0 : Math.min(speech.duration, speechT);
+      if (speechEnded && fraction < 1) {
+        // seeking cleared `ended`; resume story playback
+        speech.play().catch(() => undefined);
+      }
+      return;
+    }
+    // Fallback: seek speech only
+    if (speech && speech.duration && Number.isFinite(speech.duration)) {
+      speech.currentTime = fraction * speech.duration;
+    }
+  }, []);
 
   const rewind5Seconds = useCallback(() => {
     if (speechRef.current) {
@@ -350,6 +515,7 @@ export function useTellerStore() {
     isStoryVisible,
     buttons,
     isBlurred,
+    outroDone,
     dotColor,
     isMusicMuted,
     speechRef,
@@ -358,6 +524,7 @@ export function useTellerStore() {
     dispatch,
     rewind5Seconds,
     forward5Seconds,
+    seekToFraction,
     toggleMusicMute,
     toggleView,
     cycleTopic,

@@ -2,6 +2,15 @@ import os
 import math  # For character-to-token conversion
 import re
 
+def _trim_to_last_sentence(text: str) -> str:
+    trimmed = text.rstrip()
+    match = None
+    for match in re.finditer(r"[.!?](?=\s|$)", trimmed):
+        pass
+    if match:
+        return trimmed[: match.end()]
+    return trimmed
+
 from mistralai.client import Mistral
 # from mistralai import Mistral
 from openai import OpenAI
@@ -17,9 +26,12 @@ COGNITIVE_PATTERNS = {
     "dual_coding": PROMPTS_DIR / "cognitive" / "dual_coding.md",
     "desirable_difficulty": PROMPTS_DIR / "cognitive" / "desirable_difficulty.md",
     "embodied_cognition": PROMPTS_DIR / "cognitive" / "embodied_cognition.md",
+    "caveman_teacher": PROMPTS_DIR / "caveman_teacher.md",
+    "pne_no_tags": PROMPTS_DIR / "pne_no_tags.md",
 }
 
-LENGTH_TOKENS = {"short": 100, "long": 250}
+LENGTH_WORDS = {"short": 80, "long": 200}
+LENGTH_TOKEN_CEILINGS = {"short": 350, "long": 800}
 
 mistral_client = Mistral(api_key=env_settings.mistral_api_key)
 openai_client = OpenAI(api_key=env_settings.openai_api_key)
@@ -47,14 +59,12 @@ def generate_story_with_mistralai(subject, temperature=0.2, length="long", appro
                     "role": "system"
                 },
                 {
-                    # "content": f"generate a 1050 char MAXIMUM text about {subject}.",
-                    "content": f"generate a {LENGTH_TOKENS.get(length, 250)} tokens MAXIMUM text about {subject}.",
-                    # "content": f"generate a 600 char MAXIMUM text about {subject}.",
+                    "content": f"write a continuous prose text of about {LENGTH_WORDS.get(length, 200)} words (never exceed {LENGTH_WORDS.get(length, 200)} words) about {subject}. The text must be complete: finish your final sentence within the word budget.",
                     "role": "user"
                 },
                 
             ],
-            max_tokens=LENGTH_TOKENS.get(length, 250),
+            max_tokens=LENGTH_TOKEN_CEILINGS.get(length, 800),
             # temperature=0.2,
             temperature=temperature,
             presence_penalty=1.2,
@@ -66,6 +76,10 @@ def generate_story_with_mistralai(subject, temperature=0.2, length="long", appro
             raise ValueError("Empty response from Mistral API")
 
         original_output = response.choices[0].message.content if response else ""
+        finish_reason = response.choices[0].finish_reason if response else None
+        if finish_reason == "length":
+            print(f"WARNING: story truncated by token ceiling (length={length}); regenerate if this recurs")
+            original_output = _trim_to_last_sentence(original_output)
         original_output = original_output.replace("*", "").replace("**", "")
         print(f"GENERATED OUTPUT: {original_output}")
 

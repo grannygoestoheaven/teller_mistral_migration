@@ -42,11 +42,13 @@ export interface StateMachineActions {
   resumeAllAudio(): void;
   uiPlayingButtons(): void;
   orangeDots(): void;
-  bothTracksEnded(): boolean;
+  beginOutro(): void;
+  clearOutroTimers(): void;
+  endOfPlayback(): void;
+  playbackHasEnded(): boolean;
   textView(): void;
   uiReadyButtons(): void;
   startNewStoryProcessForm(): void;
-  getIsChatVisible(): boolean;
   inputIsEmpty(): boolean;
 }
 
@@ -97,20 +99,30 @@ export class AudioStateMachine {
         break;
 
       case StateId.PLAYING:
-        if (eventId === EventId.SPEECH_OVER) this.actions.textView();
-        else if (eventId === EventId.TOGGLE_PAUSE_RESUME) {
-          this.actions.pauseAllAudio();
-          this.transitionTo(StateId.PAUSED);
+        if (eventId === EventId.SPEECH_OVER) {
+          // Playback ends 10s after speech: hold, fade music 5s, then IDLE.
+          this.actions.beginOutro();
+          this.actions.textView();
+        } else if (eventId === EventId.TOGGLE_PAUSE_RESUME) {
+          if (this.actions.playbackHasEnded()) {
+            // Play after the fade fully ended: start over, same as Replay.
+            this.actions.resetAllAudio();
+            this.actions.resumeAllAudio();
+            this.transitionTo(StateId.PLAYING);
+          } else {
+            this.actions.pauseAllAudio();
+            this.transitionTo(StateId.PAUSED);
+          }
         } else if (eventId === EventId.FROM_START_CLICKED) {
           this.actions.resetAllAudio();
           this.actions.resumeAllAudio();
           this.transitionTo(StateId.PLAYING);
         } else if (eventId === EventId.INPUT_CHANGED) this.transitionTo(StateId.READY_DURING_PLAYBACK);
         else if (eventId === EventId.MUSIC_OVER) {
-          if (this.actions.bothTracksEnded()) {
-            this.actions.resetAllAudio();
-            this.transitionTo(StateId.IDLE);
-          }
+          // End of playback: restore volume, keep position and view.
+          // Stay in PLAYING so the user can seek backward or replay;
+          // IDLE (full reinit) is reserved for starting a new story.
+          this.actions.endOfPlayback();
         } else if (eventId === EventId.CANCEL) this.transitionTo(StateId.IDLE);
         break;
 
@@ -123,7 +135,7 @@ export class AudioStateMachine {
           this.actions.resumeAllAudio();
           this.transitionTo(StateId.PLAYING);
         } else if (eventId === EventId.INPUT_DEFOCUSED) {
-          if (!this.actions.getIsChatVisible()) this.transitionTo(StateId.IDLE);
+          // Defocusing the input never switches the view; stay in READY state.
         } else if (eventId === EventId.TOGGLE_PAUSE_RESUME) {
           if (!this.actions.inputIsEmpty()) {
             this.actions.startNewStoryProcessForm();

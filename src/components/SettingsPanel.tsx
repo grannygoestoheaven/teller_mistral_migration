@@ -26,8 +26,10 @@ function LongTextIcon() {
   );
 }
 
+// dual_coding kept in backend (types + router) but hidden from the menu for now
 const APPROACHES: { value: Approach; label: string }[] = [
-  { value: 'dual_coding', label: 'Dual Coding' },
+  { value: 'caveman_teacher', label: 'Caveman Teacher' },
+  { value: 'pne_no_tags', label: 'PNE no tags' },
   { value: 'desirable_difficulty', label: 'Desirable Difficulty' },
   { value: 'embodied_cognition', label: 'Embodied Cognition' },
 ];

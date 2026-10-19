@@ -30,6 +30,7 @@ export default function App() {
     handleSquareMouseDown,
     handleSquareMouseEnter,
     seekToFraction,
+    outroDone,
     inputRef,
   } = teller;
 
@@ -133,7 +134,7 @@ export default function App() {
                 }}
               />
             </div>
-            <ProgressBar audioRef={speechRef} backgroundRef={backgroundRef} onSeek={seekToFraction} />
+            <ProgressBar audioRef={speechRef} backgroundRef={backgroundRef} onSeek={seekToFraction} outroDone={outroDone} />
             <div className="controls">
               <button
                 type="button"

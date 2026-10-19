@@ -4,7 +4,12 @@ interface ProgressBarProps {
   audioRef: React.RefObject<HTMLAudioElement | null>;
   backgroundRef: React.RefObject<HTMLAudioElement | null>;
   onSeek?: (fraction: number) => void;
-  speechStartDelaySec?: number;
+  /** speech intro delay (s), outro hold (s), fade (s) — bar spans the whole experience */
+  introSec?: number;
+  outroHoldSec?: number;
+  fadeSec?: number;
+  /** true once the outro fade fully completed — bar resets to empty */
+  outroDone?: boolean;
 }
 
 /**
@@ -18,13 +23,25 @@ interface ProgressBarProps {
  * and the cursor stays visible; playback seeks on release. Hover reveals
  * a small soft-edged square cursor. No circles.
  */
-export function ProgressBar({ audioRef, backgroundRef, onSeek, speechStartDelaySec = 5 }: ProgressBarProps) {
+export function ProgressBar({
+  audioRef,
+  backgroundRef,
+  onSeek,
+  introSec = 5,
+  outroHoldSec = 30,
+  fadeSec = 5,
+  outroDone = false,
+}: ProgressBarProps) {
   const [progress, setProgress] = useState(0);
   const [scrubFraction, setScrubFraction] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
   const lineRef = useRef<HTMLDivElement | null>(null);
 
-  const shown = scrubFraction ?? progress;
+  const shown = outroDone ? 0 : scrubFraction ?? progress;
+
+  useEffect(() => {
+    if (outroDone) setProgress(0);
+  }, [outroDone]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -32,9 +49,8 @@ export function ProgressBar({ audioRef, backgroundRef, onSeek, speechStartDelayS
     if (!audio && !background) return;
 
     const update = () => {
-      // The story timeline is the SPEECH (intro delay + speech duration),
-      // not the (usually longer) music track. The bar must end when the
-      // story ends.
+      // The bar spans the WHOLE experience: intro (music alone), speech,
+      // outro hold, fade. It fills fully exactly when the music fade ends.
       const speech = audio;
       if (
         speech &&
@@ -43,7 +59,7 @@ export function ProgressBar({ audioRef, backgroundRef, onSeek, speechStartDelayS
         background &&
         Number.isFinite(background.currentTime)
       ) {
-        const total = speech.duration + speechStartDelaySec;
+        const total = introSec + speech.duration + outroHoldSec + fadeSec;
         setProgress(Math.min(1, Math.max(0, background.currentTime / total)));
         return;
       }
@@ -52,7 +68,8 @@ export function ProgressBar({ audioRef, backgroundRef, onSeek, speechStartDelayS
         setProgress(Math.min(1, Math.max(0, speech.currentTime / speech.duration)));
       }
     };
-    const onEnded = () => setProgress(1);
+    // (Bar reset on fade completion is handled via the outroDone prop.)
+    const onEnded = () => undefined;
 
     const targets = [audio, background].filter(Boolean) as HTMLAudioElement[];
     targets.forEach((el) => {

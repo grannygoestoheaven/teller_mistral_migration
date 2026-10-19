@@ -45,6 +45,7 @@ export interface StateMachineActions {
   beginOutro(): void;
   clearOutroTimers(): void;
   endOfPlayback(): void;
+  playbackHasEnded(): boolean;
   textView(): void;
   uiReadyButtons(): void;
   startNewStoryProcessForm(): void;
@@ -103,8 +104,15 @@ export class AudioStateMachine {
           this.actions.beginOutro();
           this.actions.textView();
         } else if (eventId === EventId.TOGGLE_PAUSE_RESUME) {
-          this.actions.pauseAllAudio();
-          this.transitionTo(StateId.PAUSED);
+          if (this.actions.playbackHasEnded()) {
+            // Play after the fade fully ended: start over, same as Replay.
+            this.actions.resetAllAudio();
+            this.actions.resumeAllAudio();
+            this.transitionTo(StateId.PLAYING);
+          } else {
+            this.actions.pauseAllAudio();
+            this.transitionTo(StateId.PAUSED);
+          }
         } else if (eventId === EventId.FROM_START_CLICKED) {
           this.actions.resetAllAudio();
           this.actions.resumeAllAudio();

@@ -52,6 +52,8 @@ export function useTellerStore() {
     playPauseLabel: 'Start',
   });
   const [isBlurred, setIsBlurred] = useState(false);
+  // Mirrors outroDoneRef for components (progress bar reset).
+  const [outroDone, setOutroDone] = useState(false);
   const [dotColor, setDotColor] = useState<DotColor>('loading');
   const [isMusicMuted, setIsMusicMuted] = useState(false);
   const [settings, setSettingsState] = useState<StorySettings>(() => {
@@ -126,6 +128,7 @@ export function useTellerStore() {
   const resetAllAudio = useCallback(() => {
     clearOutroTimersRef.current?.();
     outroDoneRef.current = false; // full replay re-arms music
+    setOutroDone(false);
     if (speechRef.current) speechRef.current.currentTime = 0;
     if (backgroundRef.current) {
       backgroundRef.current.currentTime = 0;
@@ -188,10 +191,21 @@ export function useTellerStore() {
     let step = 0;
     fadeOutRef.current = setInterval(() => {
       step += 1;
-      bg.volume = Math.max(0, startVolume * (1 - step / steps));
+      const bgNow = backgroundRef.current;
+      if (!bgNow) {
+        if (fadeOutRef.current) clearInterval(fadeOutRef.current);
+        fadeOutRef.current = null;
+        return;
+      }
+      bgNow.volume = Math.max(0, startVolume * (1 - step / steps));
       if (step >= steps) {
-        bg.pause();
+        // Authoritative stop: volume 0, pause, and clear the source so no
+        // browser restart path (loop/ended/autoplay heuristics) can produce
+        // audible music afterwards.
+        bgNow.pause();
+        bgNow.volume = 0;
         outroDoneRef.current = true; // music must not resume after the fade
+        setOutroDone(true);
         if (fadeOutRef.current) clearInterval(fadeOutRef.current);
         fadeOutRef.current = null;
       }
@@ -207,6 +221,7 @@ export function useTellerStore() {
   const endOfPlayback = useCallback(() => {
     clearOutroTimersRef.current?.();
     outroDoneRef.current = true;
+    setOutroDone(true);
     // Music stays paused at 0 volume. Volume is restored only by an explicit
     // user action (resetAllAudio on Replay, or a backward seek).
     // quick fade of the button value: out, swap to Play, in
@@ -290,6 +305,7 @@ export function useTellerStore() {
         setButtons({ fromStartDisabled: false, playPauseDisabled: false, playPauseLabel: 'Pause' }),
       orangeDots: () => setDotColor('orange'),
       endOfPlayback,
+      playbackHasEnded: () => outroDoneRef.current,
       beginOutro,
       clearOutroTimers,
       textView: () => setView('text'),
@@ -373,6 +389,7 @@ export function useTellerStore() {
       // replay from a position — revive the music even if the outro finished.
       clearOutroTimersRef.current?.();
       outroDoneRef.current = false;
+      setOutroDone(false);
       if (bg) {
         bg.volume = 0.03; // undo fade
         bg.play().catch(() => undefined);
@@ -492,6 +509,7 @@ export function useTellerStore() {
     isStoryVisible,
     buttons,
     isBlurred,
+    outroDone,
     dotColor,
     isMusicMuted,
     speechRef,

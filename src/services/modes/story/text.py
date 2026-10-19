@@ -26,6 +26,8 @@ COGNITIVE_PATTERNS = {
     "dual_coding": PROMPTS_DIR / "cognitive" / "dual_coding.md",
     "desirable_difficulty": PROMPTS_DIR / "cognitive" / "desirable_difficulty.md",
     "embodied_cognition": PROMPTS_DIR / "cognitive" / "embodied_cognition.md",
+    "caveman_teacher": PROMPTS_DIR / "caveman_teacher.md",
+    "pne_no_tags": PROMPTS_DIR / "pne_no_tags.md",
 }
 
 LENGTH_WORDS = {"short": 80, "long": 200}

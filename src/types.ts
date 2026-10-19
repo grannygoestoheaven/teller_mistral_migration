@@ -27,7 +27,12 @@ export type SquareData = {
   isPlayed: boolean;
 };
 
-export type Approach = 'dual_coding' | 'desirable_difficulty' | 'embodied_cognition';
+export type Approach =
+  | 'dual_coding'
+  | 'desirable_difficulty'
+  | 'embodied_cognition'
+  | 'caveman_teacher'
+  | 'pne_no_tags';
 export type Audience = 'kids' | 'grown-ups';
 export type StoryLength = 'short' | 'long';
 

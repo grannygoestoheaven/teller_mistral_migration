@@ -122,7 +122,7 @@ export class AudioStateMachine {
           this.actions.resumeAllAudio();
           this.transitionTo(StateId.PLAYING);
         } else if (eventId === EventId.INPUT_DEFOCUSED) {
-          this.transitionTo(StateId.IDLE);
+          // Defocusing the input never switches the view; stay in READY state.
         } else if (eventId === EventId.TOGGLE_PAUSE_RESUME) {
           if (!this.actions.inputIsEmpty()) {
             this.actions.startNewStoryProcessForm();

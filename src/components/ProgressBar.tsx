@@ -11,13 +11,19 @@ interface ProgressBarProps {
  * Speech and music are linked (music starts at 0, speech joins at +5s), so
  * the combined experience is driven by the background track timeline:
  * progress = background.currentTime / background.duration. Falls back to
- * speech when the background track has no usable duration. Hover reveals a
- * small soft-edged square cursor. Click to seek. No circles.
+ * speech when the background track has no usable duration.
+ *
+ * Spotify-like scrub: while the user drags, the fill follows the pointer
+ * and the cursor stays visible; playback seeks on release. Hover reveals
+ * a small soft-edged square cursor. No circles.
  */
 export function ProgressBar({ audioRef, backgroundRef, onSeek }: ProgressBarProps) {
   const [progress, setProgress] = useState(0);
-  const [hoverX, setHoverX] = useState<number | null>(null);
+  const [scrubFraction, setScrubFraction] = useState<number | null>(null);
+  const [dragging, setDragging] = useState(false);
   const lineRef = useRef<HTMLDivElement | null>(null);
+
+  const shown = scrubFraction ?? progress;
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -52,36 +58,66 @@ export function ProgressBar({ audioRef, backgroundRef, onSeek }: ProgressBarProp
     };
   }, [audioRef, backgroundRef]);
 
-  const fractionFromEvent = (clientX: number): number => {
+  const fractionFromClientX = (clientX: number): number => {
     const line = lineRef.current;
     if (!line) return 0;
     const rect = line.getBoundingClientRect();
     return Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
   };
 
+  const startDrag = (clientX: number) => {
+    setDragging(true);
+    setScrubFraction(fractionFromClientX(clientX));
+  };
+
+  const moveDrag = (clientX: number) => {
+    if (dragging) setScrubFraction(fractionFromClientX(clientX));
+  };
+
+  const endDrag = (commit: boolean) => {
+    if (!dragging) return;
+    const fraction = scrubFraction;
+    setDragging(false);
+    setScrubFraction(null);
+    if (commit && fraction !== null) onSeek?.(fraction);
+  };
+
+  // Global listeners so drags continue outside the thin line
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e: MouseEvent) => moveDrag(e.clientX);
+    const onUp = () => endDrag(true);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  });
+
   return (
     <div
-      className="progress-line"
+      className={`progress-line${dragging ? ' dragging' : ''}`}
       ref={lineRef}
       role="slider"
       aria-label="Story playback position"
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-valuenow={Math.round(progress * 100)}
+      aria-valuenow={Math.round(shown * 100)}
       tabIndex={0}
-      onMouseMove={(e) => setHoverX(fractionFromEvent(e.clientX))}
-      onMouseLeave={() => setHoverX(null)}
-      onClick={(e) => onSeek?.(fractionFromEvent(e.clientX))}
+      onMouseDown={(e) => startDrag(e.clientX)}
+      onMouseMove={(e) => !dragging && setScrubFraction(fractionFromClientX(e.clientX))}
+      onMouseLeave={() => !dragging && setScrubFraction(null)}
       onKeyDown={(e) => {
         if (e.key === 'ArrowRight') onSeek?.(Math.min(1, progress + 0.05));
         if (e.key === 'ArrowLeft') onSeek?.(Math.max(0, progress - 0.05));
       }}
     >
-      <div className="progress-line-fill" style={{ width: `${progress * 100}%` }} />
-      {hoverX !== null && (
+      <div className="progress-line-fill" style={{ width: `${shown * 100}%` }} />
+      {scrubFraction !== null && (
         <div
           className="progress-line-cursor"
-          style={{ left: `${hoverX * 100}%` }}
+          style={{ left: `${shown * 100}%` }}
         />
       )}
     </div>

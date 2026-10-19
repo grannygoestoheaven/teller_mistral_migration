@@ -42,7 +42,8 @@ export interface StateMachineActions {
   resumeAllAudio(): void;
   uiPlayingButtons(): void;
   orangeDots(): void;
-  bothTracksEnded(): boolean;
+  beginOutro(): void;
+  clearOutroTimers(): void;
   textView(): void;
   uiReadyButtons(): void;
   startNewStoryProcessForm(): void;
@@ -96,8 +97,11 @@ export class AudioStateMachine {
         break;
 
       case StateId.PLAYING:
-        if (eventId === EventId.SPEECH_OVER) this.actions.textView();
-        else if (eventId === EventId.TOGGLE_PAUSE_RESUME) {
+        if (eventId === EventId.SPEECH_OVER) {
+          // Playback ends 10s after speech: hold, fade music 5s, then IDLE.
+          this.actions.beginOutro();
+          this.actions.textView();
+        } else if (eventId === EventId.TOGGLE_PAUSE_RESUME) {
           this.actions.pauseAllAudio();
           this.transitionTo(StateId.PAUSED);
         } else if (eventId === EventId.FROM_START_CLICKED) {
@@ -106,10 +110,9 @@ export class AudioStateMachine {
           this.transitionTo(StateId.PLAYING);
         } else if (eventId === EventId.INPUT_CHANGED) this.transitionTo(StateId.READY_DURING_PLAYBACK);
         else if (eventId === EventId.MUSIC_OVER) {
-          if (this.actions.bothTracksEnded()) {
-            this.actions.resetAllAudio();
-            this.transitionTo(StateId.IDLE);
-          }
+          this.actions.clearOutroTimers();
+          this.actions.resetAllAudio();
+          this.transitionTo(StateId.IDLE);
         } else if (eventId === EventId.CANCEL) this.transitionTo(StateId.IDLE);
         break;
 

@@ -1,14 +1,26 @@
 /* Thin playback progress line between subject input and controls.
-   Same width as the input (530px), super thin, light grey.
-   Hover reveals a small soft-edged square cursor. No circles. */
+   3/4 of input width, super thin, light grey. Hover reveals a soft square
+   cursor. Fill follows the cursor while dragging (Spotify-like scrub).
+   Generous invisible grab zone via ::after. No circles. */
 
 .progress-line {
   position: relative;
-  width: 530px;
+  width: 400px; /* ~3/4 of the 530px input */
   height: 4px;
-  margin: 6px auto;
+  margin: 10px auto;
   cursor: pointer;
   border-radius: 2px;
+  touch-action: none;
+}
+
+/* Invisible extended grab/interaction zone */
+.progress-line::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -8px;
+  bottom: -8px;
 }
 
 .progress-line::before {
@@ -40,5 +52,15 @@
   border-radius: 3px; /* soft square, no sharp corners */
   box-shadow: 0 0 6px rgba(227, 221, 200, 0.5);
   pointer-events: none;
+}
+
+/* Cursor visible during hover AND while dragging */
+.progress-line:hover .progress-line-cursor,
+.progress-line.dragging .progress-line-cursor {
+  opacity: 1;
+}
+
+.progress-line .progress-line-cursor {
+  opacity: 0;
   transition: opacity 120ms ease;
 }

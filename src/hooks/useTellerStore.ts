@@ -7,6 +7,8 @@ import { DEFAULT_SETTINGS } from '../types';
 
 export const SQUARES_PER_WIDTH = 5;
 const SPEECH_START_DELAY_MS = 5000;
+const OUTRO_HOLD_MS = 10000; // hold music after speech ends
+const FADE_OUT_MS = 5000; // fade music to silence
 
 export interface Square {
   id: number;
@@ -76,6 +78,9 @@ export function useTellerStore() {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
+  // Set after clearOutroTimers is defined; lets earlier-declared callbacks
+  // (resetAllAudio, abortProcess) cancel a pending outro.
+  const clearOutroTimersRef = useRef<(() => void) | null>(null);
   const pendingSubjectRef = useRef<string | null>(null);
   const speechTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasInitialSyncOccurredRef = useRef(false);
@@ -114,6 +119,7 @@ export function useTellerStore() {
   }, []);
 
   const resetAllAudio = useCallback(() => {
+    clearOutroTimersRef.current?.();
     if (speechRef.current) speechRef.current.currentTime = 0;
     if (backgroundRef.current) backgroundRef.current.currentTime = 0;
   }, []);
@@ -139,9 +145,61 @@ export function useTellerStore() {
     delaySpeechStart();
   }, [delaySpeechStart]);
 
-  const bothTracksEnded = useCallback(() => {
-    return !!speechRef.current?.ended && !!backgroundRef.current?.ended;
+  const fadeOutRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const outroTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearOutroTimers = useCallback(() => {
+    if (fadeOutRef.current) {
+      clearInterval(fadeOutRef.current);
+      fadeOutRef.current = null;
+    }
+    if (outroTimeoutRef.current) {
+      clearTimeout(outroTimeoutRef.current);
+      outroTimeoutRef.current = null;
+    }
+    // restore music volume if a fade was in progress
+    const bg = backgroundRef.current;
+    if (bg && bg.paused && bg.volume === 0) {
+      bg.volume = 0.03;
+    }
   }, []);
+  clearOutroTimersRef.current = clearOutroTimers;
+
+  // Fade the background track to 0 over FADE_OUT_MS using a stepped ramp
+  // (plain <audio> volume has no native ramp; Web Audio API is the future
+  // pro path for this).
+  const fadeOutBackground = useCallback((ms: number) => {
+    const bg = backgroundRef.current;
+    if (!bg) return;
+    if (fadeOutRef.current) clearInterval(fadeOutRef.current);
+    const startVolume = bg.volume;
+    const steps = 20;
+    const stepMs = ms / steps;
+    let step = 0;
+    fadeOutRef.current = setInterval(() => {
+      step += 1;
+      bg.volume = Math.max(0, startVolume * (1 - step / steps));
+      if (step >= steps) {
+        bg.pause();
+        bg.volume = startVolume; // restore for next playback
+        if (fadeOutRef.current) clearInterval(fadeOutRef.current);
+        fadeOutRef.current = null;
+      }
+    }, stepMs);
+  }, []);
+
+  const beginOutro = useCallback(() => {
+    // Playback ends 10s after speech ends: hold, then fade music 5s, then done.
+    clearOutroTimers();
+    outroTimeoutRef.current = setTimeout(() => {
+      outroTimeoutRef.current = null;
+      fadeOutBackground(FADE_OUT_MS);
+      outroTimeoutRef.current = setTimeout(() => {
+        outroTimeoutRef.current = null;
+        smRef.current?.dispatchEvent(EventId.MUSIC_OVER);
+      }, FADE_OUT_MS);
+    }, OUTRO_HOLD_MS);
+  }, [clearOutroTimers, fadeOutBackground]);
 
   const startNewStoryProcessForm = useCallback(async () => {
     const pending = pendingSubjectRef.current;
@@ -203,7 +261,8 @@ export function useTellerStore() {
       uiPlayingButtons: () =>
         setButtons({ fromStartDisabled: false, playPauseDisabled: false, playPauseLabel: 'Pause' }),
       orangeDots: () => setDotColor('orange'),
-      bothTracksEnded,
+      beginOutro,
+      clearOutroTimers,
       textView: () => setView('text'),
       uiReadyButtons: () =>
         setButtons({ fromStartDisabled: true, playPauseDisabled: false, playPauseLabel: 'Start' }),
@@ -218,7 +277,8 @@ export function useTellerStore() {
       resetAllAudio,
       setUpAndStartAllAudio,
       resumeAllAudio,
-      bothTracksEnded,
+      beginOutro,
+      clearOutroTimers,
       startNewStoryProcessForm,
       inputIsEmpty,
       view,

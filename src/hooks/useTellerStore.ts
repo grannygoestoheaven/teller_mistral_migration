@@ -131,6 +131,7 @@ export function useTellerStore() {
     setOutroDone(false);
     if (speechRef.current) speechRef.current.currentTime = 0;
     if (backgroundRef.current) {
+      backgroundRef.current.muted = false; // release the fade's mute lock
       backgroundRef.current.currentTime = 0;
       backgroundRef.current.volume = 0.03; // undo any fade
     }
@@ -199,9 +200,11 @@ export function useTellerStore() {
       }
       bgNow.volume = Math.max(0, startVolume * (1 - step / steps));
       if (step >= steps) {
-        // Authoritative stop: volume 0, pause, and clear the source so no
-        // browser restart path (loop/ended/autoplay heuristics) can produce
-        // audible music afterwards.
+        // Authoritative stop — triple lock: muted + volume 0 + pause.
+        // `muted` is a hard kill switch independent of volume: even if an
+        // unknown code path restores volume and plays, a muted element is
+        // silent. Only explicit user intents (Replay, backward seek) unmute.
+        bgNow.muted = true;
         bgNow.pause();
         bgNow.volume = 0;
         outroDoneRef.current = true; // music must not resume after the fade
@@ -391,6 +394,7 @@ export function useTellerStore() {
       outroDoneRef.current = false;
       setOutroDone(false);
       if (bg) {
+        bg.muted = false; // release the fade's mute lock
         bg.volume = 0.03; // undo fade
         bg.play().catch(() => undefined);
       }

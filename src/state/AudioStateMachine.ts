@@ -44,6 +44,7 @@ export interface StateMachineActions {
   orangeDots(): void;
   beginOutro(): void;
   clearOutroTimers(): void;
+  endOfPlayback(): void;
   textView(): void;
   uiReadyButtons(): void;
   startNewStoryProcessForm(): void;
@@ -110,9 +111,10 @@ export class AudioStateMachine {
           this.transitionTo(StateId.PLAYING);
         } else if (eventId === EventId.INPUT_CHANGED) this.transitionTo(StateId.READY_DURING_PLAYBACK);
         else if (eventId === EventId.MUSIC_OVER) {
-          this.actions.clearOutroTimers();
-          this.actions.resetAllAudio();
-          this.transitionTo(StateId.IDLE);
+          // End of playback: restore volume, keep position and view.
+          // Stay in PLAYING so the user can seek backward or replay;
+          // IDLE (full reinit) is reserved for starting a new story.
+          this.actions.endOfPlayback();
         } else if (eventId === EventId.CANCEL) this.transitionTo(StateId.IDLE);
         break;
 

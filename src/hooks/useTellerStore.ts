@@ -109,19 +109,30 @@ export function useTellerStore() {
   }, []);
 
   const resumeAllAudio = useCallback(() => {
-    backgroundRef.current?.play();
+    const bg = backgroundRef.current;
+    if (bg) {
+      if (bg.volume < 0.03) bg.volume = 0.03; // undo any fade
+      bg.play().catch(() => undefined);
+    }
     if (isPausedDuringDelayRef.current) {
       delaySpeechStart(remainingDelayRef.current);
       isPausedDuringDelayRef.current = false;
     } else if (speechRef.current && !speechRef.current.ended) {
-      speechRef.current.play();
+      speechRef.current.play().catch(() => undefined);
     }
   }, []);
 
   const resetAllAudio = useCallback(() => {
     clearOutroTimersRef.current?.();
     if (speechRef.current) speechRef.current.currentTime = 0;
-    if (backgroundRef.current) backgroundRef.current.currentTime = 0;
+    if (backgroundRef.current) {
+      backgroundRef.current.currentTime = 0;
+      backgroundRef.current.volume = 0.03; // undo any fade
+    }
+    // Re-arm the 5s speech intro so replay starts music alone first.
+    hasInitialSyncOccurredRef.current = false;
+    isPausedDuringDelayRef.current = true;
+    remainingDelayRef.current = SPEECH_START_DELAY_MS;
   }, []);
 
   const delaySpeechStart = useCallback((ms: number = SPEECH_START_DELAY_MS) => {
@@ -186,6 +197,14 @@ export function useTellerStore() {
         fadeOutRef.current = null;
       }
     }, stepMs);
+  }, []);
+
+  // End of the full playback (speech + outro finished): restore music
+  // volume and keep both tracks where they are so the user can still seek
+  // backward or replay. No reinitialization.
+  const endOfPlayback = useCallback(() => {
+    clearOutroTimersRef.current?.();
+    if (backgroundRef.current) backgroundRef.current.volume = 0.03;
   }, []);
 
   const beginOutro = useCallback(() => {
@@ -261,6 +280,7 @@ export function useTellerStore() {
       uiPlayingButtons: () =>
         setButtons({ fromStartDisabled: false, playPauseDisabled: false, playPauseLabel: 'Pause' }),
       orangeDots: () => setDotColor('orange'),
+      endOfPlayback,
       beginOutro,
       clearOutroTimers,
       textView: () => setView('text'),

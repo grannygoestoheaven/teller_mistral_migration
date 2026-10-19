@@ -4,7 +4,8 @@ import { useTellerStore } from './hooks/useTellerStore';
 import { SubjectGrid } from './components/SubjectGrid';
 import { LoadingDots } from './components/LoadingDots';
 import { StoryText } from './components/StoryText';
-import { SettingsPanel } from './components/SettingsPanel';
+import { ProgressBar } from './components/ProgressBar';
+import './components/ProgressBar.css';
 
 export default function App() {
   const teller = useTellerStore();
@@ -28,8 +29,7 @@ export default function App() {
     cycleTopic,
     handleSquareMouseDown,
     handleSquareMouseEnter,
-    settings,
-    setSettings,
+    seekToFraction,
   } = teller;
 
   const suppressDefocusRef = useRef(false);
@@ -88,8 +88,6 @@ export default function App() {
         <div id="story-title-display" className="story-title-display"></div>
       </div>
 
-      <SettingsPanel settings={settings} onChange={setSettings} />
-
       <footer className="chat-input-area">
         <form
           id="storyForm"
@@ -132,6 +130,7 @@ export default function App() {
                 }}
               />
             </div>
+            <ProgressBar audioRef={speechRef} onSeek={seekToFraction} />
             <div className="controls">
               <button
                 type="button"

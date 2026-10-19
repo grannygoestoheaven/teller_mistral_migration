@@ -262,6 +262,13 @@ export function useTellerStore() {
     return () => bg.removeEventListener('ended', onEnded);
   }, [dispatch]);
 
+  const seekToFraction = useCallback((fraction: number) => {
+    const speech = speechRef.current;
+    if (speech && speech.duration && Number.isFinite(speech.duration)) {
+      speech.currentTime = fraction * speech.duration;
+    }
+  }, []);
+
   const rewind5Seconds = useCallback(() => {
     if (speechRef.current) {
       speechRef.current.currentTime = Math.max(0, speechRef.current.currentTime - 5);
@@ -361,6 +368,7 @@ export function useTellerStore() {
     dispatch,
     rewind5Seconds,
     forward5Seconds,
+    seekToFraction,
     toggleMusicMute,
     toggleView,
     cycleTopic,

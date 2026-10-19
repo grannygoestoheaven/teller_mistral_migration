@@ -1,0 +1,44 @@
+/* Thin playback progress line between subject input and controls.
+   Same width as the input (530px), super thin, light grey.
+   Hover reveals a small soft-edged square cursor. No circles. */
+
+.progress-line {
+  position: relative;
+  width: 530px;
+  height: 4px;
+  margin: 6px auto;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.progress-line::before {
+  content: '';
+  position: absolute;
+  inset: 1px 0;
+  height: 2px;
+  background: rgba(200, 200, 200, 0.25);
+  border-radius: 1px;
+}
+
+.progress-line-fill {
+  position: absolute;
+  left: 0;
+  top: 1px;
+  height: 2px;
+  background: rgba(227, 221, 200, 0.85);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+.progress-line-cursor {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  background: #e3ddc8;
+  border-radius: 3px; /* soft square, no sharp corners */
+  box-shadow: 0 0 6px rgba(227, 221, 200, 0.5);
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}

@@ -202,16 +202,17 @@ export function useTellerStore() {
   // volume and keep both tracks where they are so the user can still seek
   // backward or replay. No reinitialization.
   // End of the full playback (speech + outro finished): restore music
-  // volume for the next run, set the button back to Play, and pulse the
-  // story text (quick fade out then in). No reinitialization.
+  // volume for the next run and set the button back to Play. The button's
+  // value text does a quick fade out then in. No reinitialization.
   const endOfPlayback = useCallback(() => {
     clearOutroTimersRef.current?.();
     outroDoneRef.current = true;
     if (backgroundRef.current) backgroundRef.current.volume = 0.03;
-    setButtons({ fromStartDisabled: false, playPauseDisabled: false, playPauseLabel: 'Play' });
-    // quick text pulse: fade out then in
-    setIsBlurred(true);
-    setTimeout(() => setIsBlurred(false), 250);
+    // quick fade of the button value: out, swap to Play, in
+    setButtons({ fromStartDisabled: false, playPauseDisabled: false, playPauseLabel: '' });
+    setTimeout(() => {
+      setButtons({ fromStartDisabled: false, playPauseDisabled: false, playPauseLabel: 'Play' });
+    }, 250);
   }, []);
 
   const beginOutro = useCallback(() => {

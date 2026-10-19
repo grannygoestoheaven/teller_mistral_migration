@@ -687,6 +687,14 @@ box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
     cursor: not-allowed;
 }
 
+/* Button value text fades when the label swaps (e.g. Pause -> Play) */
+.send-button .pixel-play {
+    transition: opacity 200ms ease;
+}
+.send-button .pixel-play.swap {
+    opacity: 0;
+}
+
 .rewind-and-forward-buttons {
     padding: 4px 14px;
     display: flex;
@@ -703,10 +711,6 @@ box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 .square-filled {
   border: var(--square-dashed-border);
-}
-
-.chat-inner {
-  transition: filter 200ms ease;
 }
 
 .chat-inner.blurred {

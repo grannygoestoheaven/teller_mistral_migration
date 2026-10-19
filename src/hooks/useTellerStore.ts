@@ -401,7 +401,9 @@ export function useTellerStore() {
       Number.isFinite(speech.duration) &&
       bg
     ) {
-      const total = speech.duration + SPEECH_START_DELAY_MS / 1000;
+      // SAME timeline as the progress bar: intro + speech + outro hold + fade.
+      const total =
+        SPEECH_START_DELAY_MS / 1000 + speech.duration + OUTRO_HOLD_MS / 1000 + FADE_OUT_MS / 1000;
       const t = fraction * total;
       bg.currentTime = Math.min(bg.duration, t);
       const speechT = t - SPEECH_START_DELAY_MS / 1000;

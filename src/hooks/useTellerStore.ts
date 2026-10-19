@@ -328,6 +328,17 @@ export function useTellerStore() {
     // The story timeline is speech.duration + 5s intro (music starts at 0,
     // speech joins at +5s). fraction maps to that timeline, not the music
     // track length.
+    const speechEnded = !!speech?.ended;
+    // Going back in time after the speech ended (outro running or finished):
+    // cancel the outro, restore music volume, resume playback. Setting
+    // currentTime below already clears the element's `ended` flag.
+    if (speechEnded && fraction < 1) {
+      clearOutroTimersRef.current?.();
+      if (bg) {
+        bg.volume = 0.03; // undo fade
+        bg.play().catch(() => undefined);
+      }
+    }
     if (
       speech &&
       speech.duration &&
@@ -339,6 +350,10 @@ export function useTellerStore() {
       bg.currentTime = Math.min(bg.duration, t);
       const speechT = t - SPEECH_START_DELAY_MS / 1000;
       speech.currentTime = speechT <= 0 ? 0 : Math.min(speech.duration, speechT);
+      if (speechEnded && fraction < 1) {
+        // seeking cleared `ended`; resume story playback
+        speech.play().catch(() => undefined);
+      }
       return;
     }
     // Fallback: seek speech only

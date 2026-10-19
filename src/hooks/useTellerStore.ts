@@ -325,13 +325,25 @@ export function useTellerStore() {
   const seekToFraction = useCallback((fraction: number) => {
     const bg = backgroundRef.current;
     const speech = speechRef.current;
-    // Linked playback: the background track is the master clock.
-    // Seek both, keeping the 5s speech offset intact (same math as rewind/forward).
-    if (!bg || !bg.duration || !Number.isFinite(bg.duration)) return;
-    bg.currentTime = fraction * bg.duration;
+    // The story timeline is speech.duration + 5s intro (music starts at 0,
+    // speech joins at +5s). fraction maps to that timeline, not the music
+    // track length.
+    if (
+      speech &&
+      speech.duration &&
+      Number.isFinite(speech.duration) &&
+      bg
+    ) {
+      const total = speech.duration + SPEECH_START_DELAY_MS / 1000;
+      const t = fraction * total;
+      bg.currentTime = Math.min(bg.duration, t);
+      const speechT = t - SPEECH_START_DELAY_MS / 1000;
+      speech.currentTime = speechT <= 0 ? 0 : Math.min(speech.duration, speechT);
+      return;
+    }
+    // Fallback: seek speech only
     if (speech && speech.duration && Number.isFinite(speech.duration)) {
-      const t = fraction * bg.duration - SPEECH_START_DELAY_MS / 1000;
-      speech.currentTime = t <= 0 ? 0 : Math.min(speech.duration, t);
+      speech.currentTime = fraction * speech.duration;
     }
   }, []);
 

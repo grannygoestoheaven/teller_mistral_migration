@@ -4,20 +4,21 @@ interface ProgressBarProps {
   audioRef: React.RefObject<HTMLAudioElement | null>;
   backgroundRef: React.RefObject<HTMLAudioElement | null>;
   onSeek?: (fraction: number) => void;
+  speechStartDelaySec?: number;
 }
 
 /**
  * Thin horizontal progress line between the subject input and the controls.
- * Speech and music are linked (music starts at 0, speech joins at +5s), so
- * the combined experience is driven by the background track timeline:
- * progress = background.currentTime / background.duration. Falls back to
- * speech when the background track has no usable duration.
+ * The bar length matches the PLAYBACK, not the music track: the story
+ * timeline is speech.duration + SPEECH_START_DELAY (music starts at 0,
+ * speech joins at +5s). Progress = bg.currentTime / that total, clamped
+ * to 1 when the speech ends (the music outro afterwards is not "story").
  *
  * Spotify-like scrub: while the user drags, the fill follows the pointer
  * and the cursor stays visible; playback seeks on release. Hover reveals
  * a small soft-edged square cursor. No circles.
  */
-export function ProgressBar({ audioRef, backgroundRef, onSeek }: ProgressBarProps) {
+export function ProgressBar({ audioRef, backgroundRef, onSeek, speechStartDelaySec = 5 }: ProgressBarProps) {
   const [progress, setProgress] = useState(0);
   const [scrubFraction, setScrubFraction] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -31,12 +32,24 @@ export function ProgressBar({ audioRef, backgroundRef, onSeek }: ProgressBarProp
     if (!audio && !background) return;
 
     const update = () => {
-      // Linked playback: the background track is the master clock.
-      const master = background && background.duration && Number.isFinite(background.duration)
-        ? background
-        : audio;
-      if (master && master.duration && Number.isFinite(master.duration)) {
-        setProgress(Math.min(1, Math.max(0, master.currentTime / master.duration)));
+      // The story timeline is the SPEECH (intro delay + speech duration),
+      // not the (usually longer) music track. The bar must end when the
+      // story ends.
+      const speech = audio;
+      if (
+        speech &&
+        speech.duration &&
+        Number.isFinite(speech.duration) &&
+        background &&
+        Number.isFinite(background.currentTime)
+      ) {
+        const total = speech.duration + speechStartDelaySec;
+        setProgress(Math.min(1, Math.max(0, background.currentTime / total)));
+        return;
+      }
+      // Fallback: single-track mode (speech only)
+      if (speech && speech.duration && Number.isFinite(speech.duration)) {
+        setProgress(Math.min(1, Math.max(0, speech.currentTime / speech.duration)));
       }
     };
     const onEnded = () => setProgress(1);

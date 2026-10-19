@@ -110,8 +110,8 @@ export function useTellerStore() {
 
   const resumeAllAudio = useCallback(() => {
     const bg = backgroundRef.current;
-    if (bg) {
-      if (bg.volume < 0.03) bg.volume = 0.03; // undo any fade
+    if (bg && !outroDoneRef.current) {
+      if (bg.volume < 0.03) bg.volume = 0.03; // undo any incomplete fade
       bg.play().catch(() => undefined);
     }
     if (isPausedDuringDelayRef.current) {
@@ -124,6 +124,7 @@ export function useTellerStore() {
 
   const resetAllAudio = useCallback(() => {
     clearOutroTimersRef.current?.();
+    outroDoneRef.current = false; // full replay re-arms music
     if (speechRef.current) speechRef.current.currentTime = 0;
     if (backgroundRef.current) {
       backgroundRef.current.currentTime = 0;
@@ -158,6 +159,8 @@ export function useTellerStore() {
 
   const fadeOutRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const outroTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // True once the outro fade has fully completed (music paused at 0 volume).
+  const outroDoneRef = useRef(false);
 
   const clearOutroTimers = useCallback(() => {
     if (fadeOutRef.current) {
@@ -167,11 +170,6 @@ export function useTellerStore() {
     if (outroTimeoutRef.current) {
       clearTimeout(outroTimeoutRef.current);
       outroTimeoutRef.current = null;
-    }
-    // restore music volume if a fade was in progress
-    const bg = backgroundRef.current;
-    if (bg && bg.paused && bg.volume === 0) {
-      bg.volume = 0.03;
     }
   }, []);
   clearOutroTimersRef.current = clearOutroTimers;
@@ -192,7 +190,7 @@ export function useTellerStore() {
       bg.volume = Math.max(0, startVolume * (1 - step / steps));
       if (step >= steps) {
         bg.pause();
-        bg.volume = startVolume; // restore for next playback
+        outroDoneRef.current = true; // music must not resume after the fade
         if (fadeOutRef.current) clearInterval(fadeOutRef.current);
         fadeOutRef.current = null;
       }
@@ -354,7 +352,7 @@ export function useTellerStore() {
     // currentTime below already clears the element's `ended` flag.
     if (speechEnded && fraction < 1) {
       clearOutroTimersRef.current?.();
-      if (bg) {
+      if (bg && !outroDoneRef.current) {
         bg.volume = 0.03; // undo fade
         bg.play().catch(() => undefined);
       }

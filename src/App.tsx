@@ -11,10 +11,10 @@ export default function App() {
   const teller = useTellerStore();
   const {
     view,
+    story,
     inputValue,
     setInputValue,
     squares,
-    story,
     buttons,
     isBlurred,
     dotColor,
@@ -30,6 +30,7 @@ export default function App() {
     handleSquareMouseDown,
     handleSquareMouseEnter,
     seekToFraction,
+    inputRef,
   } = teller;
 
   const suppressDefocusRef = useRef(false);
@@ -78,6 +79,7 @@ export default function App() {
           onWordsSelected={(title) => {
             setInputValue(title);
             dispatch(EventId.INPUT_CHANGED);
+            inputRef.current?.focus();
           }}
         />
       </div>
@@ -107,6 +109,7 @@ export default function App() {
               <input
                 type="text"
                 id="subject"
+                ref={inputRef}
                 className="fill space"
                 name="subject"
                 placeholder="Enter a subject, ex: 'Quantum Physics'"
@@ -142,6 +145,7 @@ export default function App() {
               <button
                 type="button"
                 className="send-button pixel-play"
+                disabled={!story}
                 onClick={() => dispatch(EventId.FROM_START_CLICKED)}
               >
                 Replay

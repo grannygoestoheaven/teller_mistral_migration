@@ -7,7 +7,7 @@ import { DEFAULT_SETTINGS } from '../types';
 
 export const SQUARES_PER_WIDTH = 5;
 const SPEECH_START_DELAY_MS = 5000;
-const OUTRO_HOLD_MS = 10000; // hold music after speech ends
+const OUTRO_HOLD_MS = 30000; // hold music 30s after speech ends
 const FADE_OUT_MS = 5000; // fade music to silence
 
 export interface Square {
@@ -207,7 +207,8 @@ export function useTellerStore() {
   const endOfPlayback = useCallback(() => {
     clearOutroTimersRef.current?.();
     outroDoneRef.current = true;
-    if (backgroundRef.current) backgroundRef.current.volume = 0.03;
+    // Music stays paused at 0 volume. Volume is restored only by an explicit
+    // user action (resetAllAudio on Replay, or a backward seek).
     // quick fade of the button value: out, swap to Play, in
     setButtons({ fromStartDisabled: false, playPauseDisabled: false, playPauseLabel: '' });
     setTimeout(() => {
@@ -345,7 +346,14 @@ export function useTellerStore() {
   useEffect(() => {
     const bg = backgroundRef.current;
     if (!bg) return;
-    const onEnded = () => dispatch(EventId.MUSIC_OVER);
+    // The music track's natural end is NOT the end of playback — the outro
+    // sequence (hold + fade) owns that. Ignore the raw ended event; the outro
+    // dispatches MUSIC_OVER itself when it completes.
+    const onEnded = () => {
+      if (outroDoneRef.current) return; // already handled by the outro
+      if (outroTimeoutRef.current || fadeOutRef.current) return; // outro running: its timer decides
+      dispatch(EventId.MUSIC_OVER);
+    };
     bg.addEventListener('ended', onEnded);
     return () => bg.removeEventListener('ended', onEnded);
   }, [dispatch]);

@@ -28,6 +28,10 @@ export class AudioEngine {
    * Wire an audio element into the graph (idempotent per element).
    * Must be called after a user gesture (browser autoplay policy) — the
    * first play() click qualifies.
+   *
+   * IMPORTANT: elements feeding the graph MUST carry crossOrigin="anonymous"
+   * in the JSX; a cross-origin resource without CORS yields silence when
+   * routed through createMediaElementSource (tainted output).
    */
   attach(el: HTMLMediaElement): void {
     if (!this.ctx) {

@@ -87,7 +87,7 @@ export default function App() {
 
       <div className="audio-player-container" id="audioPlayerContainer">
         <audio id="speechAudio" preload="auto" crossOrigin="anonymous" ref={speechRef} />
-        <audio id="backgroundAudio" preload="auto" ref={backgroundRef} />
+        <audio id="backgroundAudio" preload="auto" crossOrigin="anonymous" ref={backgroundRef} />
         <div id="story-title-display" className="story-title-display"></div>
       </div>
 

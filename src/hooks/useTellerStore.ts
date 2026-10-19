@@ -114,6 +114,7 @@ export function useTellerStore() {
       if (bg.volume < 0.03) bg.volume = 0.03; // undo any incomplete fade
       bg.play().catch(() => undefined);
     }
+    // outroDone: playback is over; resume only restarts the story, not music
     if (isPausedDuringDelayRef.current) {
       delaySpeechStart(remainingDelayRef.current);
       isPausedDuringDelayRef.current = false;
@@ -200,9 +201,17 @@ export function useTellerStore() {
   // End of the full playback (speech + outro finished): restore music
   // volume and keep both tracks where they are so the user can still seek
   // backward or replay. No reinitialization.
+  // End of the full playback (speech + outro finished): restore music
+  // volume for the next run, set the button back to Play, and pulse the
+  // story text (quick fade out then in). No reinitialization.
   const endOfPlayback = useCallback(() => {
     clearOutroTimersRef.current?.();
+    outroDoneRef.current = true;
     if (backgroundRef.current) backgroundRef.current.volume = 0.03;
+    setButtons({ fromStartDisabled: false, playPauseDisabled: false, playPauseLabel: 'Play' });
+    // quick text pulse: fade out then in
+    setIsBlurred(true);
+    setTimeout(() => setIsBlurred(false), 250);
   }, []);
 
   const beginOutro = useCallback(() => {
@@ -351,8 +360,11 @@ export function useTellerStore() {
     // cancel the outro, restore music volume, resume playback. Setting
     // currentTime below already clears the element's `ended` flag.
     if (speechEnded && fraction < 1) {
+      // Explicit backward seek after the story ended: this is user intent to
+      // replay from a position — revive the music even if the outro finished.
       clearOutroTimersRef.current?.();
-      if (bg && !outroDoneRef.current) {
+      outroDoneRef.current = false;
+      if (bg) {
         bg.volume = 0.03; // undo fade
         bg.play().catch(() => undefined);
       }

@@ -130,7 +130,7 @@ export default function App() {
                 }}
               />
             </div>
-            <ProgressBar audioRef={speechRef} onSeek={seekToFraction} />
+            <ProgressBar audioRef={speechRef} backgroundRef={backgroundRef} onSeek={seekToFraction} />
             <div className="controls">
               <button
                 type="button"

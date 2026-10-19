@@ -2,43 +2,55 @@ import { useEffect, useRef, useState } from 'react';
 
 interface ProgressBarProps {
   audioRef: React.RefObject<HTMLAudioElement | null>;
-  width?: number; // px, matches input width by default via CSS
+  backgroundRef: React.RefObject<HTMLAudioElement | null>;
   onSeek?: (fraction: number) => void;
 }
 
 /**
  * Thin horizontal progress line between the subject input and the controls.
- * Fill tracks speech playback; hovering reveals a small soft-edged square
- * cursor. Click to seek. No circles.
+ * Speech and music are linked (music starts at 0, speech joins at +5s), so
+ * the combined experience is driven by the background track timeline:
+ * progress = background.currentTime / background.duration. Falls back to
+ * speech when the background track has no usable duration. Hover reveals a
+ * small soft-edged square cursor. Click to seek. No circles.
  */
-export function ProgressBar({ audioRef, onSeek }: ProgressBarProps) {
+export function ProgressBar({ audioRef, backgroundRef, onSeek }: ProgressBarProps) {
   const [progress, setProgress] = useState(0);
   const [hoverX, setHoverX] = useState<number | null>(null);
   const lineRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    const background = backgroundRef.current;
+    if (!audio && !background) return;
 
     const update = () => {
-      if (audio.duration && Number.isFinite(audio.duration)) {
-        setProgress(Math.min(1, Math.max(0, audio.currentTime / audio.duration)));
+      // Linked playback: the background track is the master clock.
+      const master = background && background.duration && Number.isFinite(background.duration)
+        ? background
+        : audio;
+      if (master && master.duration && Number.isFinite(master.duration)) {
+        setProgress(Math.min(1, Math.max(0, master.currentTime / master.duration)));
       }
     };
-    const onLoaded = () => update();
     const onEnded = () => setProgress(1);
 
-    audio.addEventListener('timeupdate', update);
-    audio.addEventListener('loadedmetadata', onLoaded);
-    audio.addEventListener('ended', onEnded);
+    const targets = [audio, background].filter(Boolean) as HTMLAudioElement[];
+    targets.forEach((el) => {
+      el.addEventListener('timeupdate', update);
+      el.addEventListener('loadedmetadata', update);
+      el.addEventListener('ended', onEnded);
+    });
     update();
 
     return () => {
-      audio.removeEventListener('timeupdate', update);
-      audio.removeEventListener('loadedmetadata', onLoaded);
-      audio.removeEventListener('ended', onEnded);
+      targets.forEach((el) => {
+        el.removeEventListener('timeupdate', update);
+        el.removeEventListener('loadedmetadata', update);
+        el.removeEventListener('ended', onEnded);
+      });
     };
-  }, [audioRef]);
+  }, [audioRef, backgroundRef]);
 
   const fractionFromEvent = (clientX: number): number => {
     const line = lineRef.current;

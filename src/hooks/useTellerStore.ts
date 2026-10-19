@@ -263,9 +263,15 @@ export function useTellerStore() {
   }, [dispatch]);
 
   const seekToFraction = useCallback((fraction: number) => {
+    const bg = backgroundRef.current;
     const speech = speechRef.current;
+    // Linked playback: the background track is the master clock.
+    // Seek both, keeping the 5s speech offset intact (same math as rewind/forward).
+    if (!bg || !bg.duration || !Number.isFinite(bg.duration)) return;
+    bg.currentTime = fraction * bg.duration;
     if (speech && speech.duration && Number.isFinite(speech.duration)) {
-      speech.currentTime = fraction * speech.duration;
+      const t = fraction * bg.duration - SPEECH_START_DELAY_MS / 1000;
+      speech.currentTime = t <= 0 ? 0 : Math.min(speech.duration, t);
     }
   }, []);
 

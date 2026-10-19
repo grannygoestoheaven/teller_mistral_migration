@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AudioStateMachine, EventId, StateId, type StateMachineActions } from '../state/AudioStateMachine';
 import { defaultFields } from '../fields/defaultFields';
 import { fetchStory, sanitizeSubject } from '../services/api';
+import { audioEngine, MUSIC_VOLUME, FADE_MS } from '../services/audioEngine';
 import type { StoryData, View, StorySettings } from '../types';
 import { DEFAULT_SETTINGS } from '../types';
 
@@ -113,7 +114,8 @@ export function useTellerStore() {
   const resumeAllAudio = useCallback(() => {
     const bg = backgroundRef.current;
     if (bg && !outroDoneRef.current) {
-      if (bg.volume < 0.03) bg.volume = 0.03; // undo any incomplete fade
+      audioEngine.unlock();
+      audioEngine.musicVolume(MUSIC_VOLUME); // undo any incomplete fade
       bg.play().catch(() => undefined);
     }
     // outroDone: playback is over; resume only restarts the story, not music
@@ -131,9 +133,9 @@ export function useTellerStore() {
     setOutroDone(false);
     if (speechRef.current) speechRef.current.currentTime = 0;
     if (backgroundRef.current) {
-      backgroundRef.current.muted = false; // release the fade's mute lock
+      audioEngine.attach(backgroundRef.current);
+      audioEngine.musicVolume(MUSIC_VOLUME);
       backgroundRef.current.currentTime = 0;
-      backgroundRef.current.volume = 0.03; // undo any fade
     }
     // Re-arm the 5s speech intro so replay starts music alone first.
     hasInitialSyncOccurredRef.current = false;
@@ -156,22 +158,18 @@ export function useTellerStore() {
 
   const setUpAndStartAllAudio = useCallback(() => {
     if (backgroundRef.current) {
-      backgroundRef.current.volume = 0.03;
+      audioEngine.attach(backgroundRef.current);
+      audioEngine.musicVolume(MUSIC_VOLUME);
       backgroundRef.current.play();
     }
     delaySpeechStart();
   }, [delaySpeechStart]);
 
-  const fadeOutRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const outroTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // True once the outro fade has fully completed (music paused at 0 volume).
   const outroDoneRef = useRef(false);
 
   const clearOutroTimers = useCallback(() => {
-    if (fadeOutRef.current) {
-      clearInterval(fadeOutRef.current);
-      fadeOutRef.current = null;
-    }
     if (outroTimeoutRef.current) {
       clearTimeout(outroTimeoutRef.current);
       outroTimeoutRef.current = null;
@@ -179,40 +177,15 @@ export function useTellerStore() {
   }, []);
   clearOutroTimersRef.current = clearOutroTimers;
 
-  // Fade the background track to 0 over FADE_OUT_MS using a stepped ramp
-  // (plain <audio> volume has no native ramp; Web Audio API is the future
-  // pro path for this).
+  // Fade the background track to silence over ms via the Web Audio gain node.
+  // Sample-accurate, no timers, no volume juggling, no mute locks: gain 0 is
+  // physically silent by construction. The outro timeout that follows this
+  // fade dispatches MUSIC_OVER, which sets outroDone and pauses the element.
   const fadeOutBackground = useCallback((ms: number) => {
     const bg = backgroundRef.current;
     if (!bg) return;
-    if (fadeOutRef.current) clearInterval(fadeOutRef.current);
-    const startVolume = bg.volume;
-    const steps = 20;
-    const stepMs = ms / steps;
-    let step = 0;
-    fadeOutRef.current = setInterval(() => {
-      step += 1;
-      const bgNow = backgroundRef.current;
-      if (!bgNow) {
-        if (fadeOutRef.current) clearInterval(fadeOutRef.current);
-        fadeOutRef.current = null;
-        return;
-      }
-      bgNow.volume = Math.max(0, startVolume * (1 - step / steps));
-      if (step >= steps) {
-        // Authoritative stop — triple lock: muted + volume 0 + pause.
-        // `muted` is a hard kill switch independent of volume: even if an
-        // unknown code path restores volume and plays, a muted element is
-        // silent. Only explicit user intents (Replay, backward seek) unmute.
-        bgNow.muted = true;
-        bgNow.pause();
-        bgNow.volume = 0;
-        outroDoneRef.current = true; // music must not resume after the fade
-        setOutroDone(true);
-        if (fadeOutRef.current) clearInterval(fadeOutRef.current);
-        fadeOutRef.current = null;
-      }
-    }, stepMs);
+    audioEngine.attach(bg);
+    audioEngine.fadeMusic(0, ms);
   }, []);
 
   // End of the full playback (speech + outro finished): restore music
@@ -225,8 +198,9 @@ export function useTellerStore() {
     clearOutroTimersRef.current?.();
     outroDoneRef.current = true;
     setOutroDone(true);
-    // Music stays paused at 0 volume. Volume is restored only by an explicit
-    // user action (resetAllAudio on Replay, or a backward seek).
+    // Music element stops (gain is already 0 from the fade). Volume is
+    // restored only by an explicit user action (Replay, backward seek).
+    backgroundRef.current?.pause();
     // quick fade of the button value: out, swap to Play, in
     setButtons({ fromStartDisabled: false, playPauseDisabled: false, playPauseLabel: '' });
     setTimeout(() => {
@@ -370,7 +344,7 @@ export function useTellerStore() {
     // dispatches MUSIC_OVER itself when it completes.
     const onEnded = () => {
       if (outroDoneRef.current) return; // already handled by the outro
-      if (outroTimeoutRef.current || fadeOutRef.current) return; // outro running: its timer decides
+      if (outroTimeoutRef.current) return; // outro running: its timer decides
       dispatch(EventId.MUSIC_OVER);
     };
     bg.addEventListener('ended', onEnded);
@@ -394,8 +368,8 @@ export function useTellerStore() {
       outroDoneRef.current = false;
       setOutroDone(false);
       if (bg) {
-        bg.muted = false; // release the fade's mute lock
-        bg.volume = 0.03; // undo fade
+        audioEngine.unlock();
+        audioEngine.musicVolume(MUSIC_VOLUME); // undo the fade instantly
         bg.play().catch(() => undefined);
       }
     }
@@ -449,9 +423,7 @@ export function useTellerStore() {
   }, []);
 
   const toggleMusicMute = useCallback(() => {
-    if (backgroundRef.current) {
-      backgroundRef.current.volume = isMusicMuted ? 0.03 : 0;
-    }
+    audioEngine.musicVolume(isMusicMuted ? MUSIC_VOLUME : 0);
     setIsMusicMuted(!isMusicMuted);
   }, [isMusicMuted]);
 

@@ -342,11 +342,12 @@ export function useTellerStore() {
     // The music track's natural end is NOT the end of playback — the outro
     // sequence (hold + fade) owns that. Ignore the raw ended event; the outro
     // dispatches MUSIC_OVER itself when it completes.
-    const onEnded = () => {
-      if (outroDoneRef.current) return; // already handled by the outro
-      if (outroTimeoutRef.current) return; // outro running: its timer decides
-      dispatch(EventId.MUSIC_OVER);
-    };
+    // The music element's natural end is MEANINGLESS as playback end: after a
+    // forward seek the music can end before the speech. The outro sequence
+    // (armed by SPEECH_OVER) is the ONLY owner of playback end — it dispatches
+    // MUSIC_OVER itself when the fade completes. The raw ended event does
+    // nothing. (The FSM also pauses the element in endOfPlayback.)
+    const onEnded = () => undefined;
     bg.addEventListener('ended', onEnded);
     return () => bg.removeEventListener('ended', onEnded);
   }, [dispatch]);

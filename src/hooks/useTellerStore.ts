@@ -355,47 +355,47 @@ export function useTellerStore() {
   const seekToFraction = useCallback((fraction: number) => {
     const bg = backgroundRef.current;
     const speech = speechRef.current;
-    // The story timeline is speech.duration + 5s intro (music starts at 0,
-    // speech joins at +5s). fraction maps to that timeline, not the music
-    // track length.
-    const speechEnded = !!speech?.ended;
-    // Going back in time after the speech ended (outro running or finished):
-    // cancel the outro, restore music volume, resume playback. Setting
-    // currentTime below already clears the element's `ended` flag.
-    if (speechEnded && fraction < 1) {
-      // Explicit backward seek after the story ended: this is user intent to
-      // replay from a position — revive the music even if the outro finished.
+    if (!speech || !speech.duration || !Number.isFinite(speech.duration)) return;
+
+    const speechEnded = !!speech.ended;
+    // Machine-paused = both elements paused by user action. A seek while
+    // paused must NOT resume playback: move positions, stay paused.
+    const machinePaused = !!bg?.paused && !!speech.paused && !speechEnded;
+
+    // Backward seek after the story ended: explicit replay intent — cancel the
+    // outro, revive music, resume playback (unless machine-paused).
+    if (speechEnded && fraction < 1 && !machinePaused) {
       clearOutroTimersRef.current?.();
       outroDoneRef.current = false;
       setOutroDone(false);
       if (bg) {
         audioEngine.unlock();
         audioEngine.musicVolume(MUSIC_VOLUME); // undo the fade instantly
-        bg.play().catch(() => undefined);
       }
     }
-    if (
-      speech &&
-      speech.duration &&
-      Number.isFinite(speech.duration) &&
-      bg
-    ) {
-      // SAME timeline as the progress bar: intro + speech + outro hold + fade.
-      const total =
-        SPEECH_START_DELAY_MS / 1000 + speech.duration + OUTRO_HOLD_MS / 1000 + FADE_OUT_MS / 1000;
-      const t = fraction * total;
-      bg.currentTime = Math.min(bg.duration, t);
-      const speechT = t - SPEECH_START_DELAY_MS / 1000;
-      speech.currentTime = speechT <= 0 ? 0 : Math.min(speech.duration, speechT);
-      if (speechEnded && fraction < 1) {
-        // seeking cleared `ended`; resume story playback
-        speech.play().catch(() => undefined);
+
+    // SAME timeline as the progress bar: intro + speech + outro hold + fade.
+    const total =
+      SPEECH_START_DELAY_MS / 1000 + speech.duration + OUTRO_HOLD_MS / 1000 + FADE_OUT_MS / 1000;
+    const t = fraction * total;
+    if (bg) {
+      const target = Math.min(bg.duration || t, t);
+      const wasEnded = bg.ended;
+      bg.currentTime = target;
+      if (wasEnded && !speechEnded) {
+        // music hit its natural end before the speech; keep it silent —
+        // the outro owns playback end, a seek must not revive the track
+        bg.pause();
       }
-      return;
     }
-    // Fallback: seek speech only
-    if (speech && speech.duration && Number.isFinite(speech.duration)) {
-      speech.currentTime = fraction * speech.duration;
+    const speechT = t - SPEECH_START_DELAY_MS / 1000;
+    speech.currentTime = speechT <= 0 ? 0 : Math.min(speech.duration, speechT);
+
+    // Resume only when actively playing and the seek revived finished audio.
+    // Paused stays paused (cursor moves, playback does not).
+    if (speechEnded && fraction < 1 && !machinePaused) {
+      speech.play().catch(() => undefined);
+      bg?.play().catch(() => undefined);
     }
   }, []);
 

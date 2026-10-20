@@ -154,6 +154,7 @@ export default function App() {
               <button
                 type="button"
                 className="send-button pixel-play"
+                disabled={buttons.playPauseDisabled}
                 onClick={() => dispatch(EventId.TOGGLE_PAUSE_RESUME)}
               >
                 {buttons.playPauseLabel}

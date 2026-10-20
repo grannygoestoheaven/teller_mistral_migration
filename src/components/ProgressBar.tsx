@@ -37,7 +37,10 @@ export function ProgressBar({
   const [dragging, setDragging] = useState(false);
   const lineRef = useRef<HTMLDivElement | null>(null);
 
-  const shown = outroDone ? 0 : scrubFraction ?? progress;
+  // Fill follows the hover/scrub position in real time; the cursor does NOT. It
+  // stays parked at the current playback position until a seek commits.
+  const fillShown = outroDone ? 0 : scrubFraction ?? progress;
+  const cursorShown = outroDone ? 0 : progress;
 
   useEffect(() => {
     if (outroDone) setProgress(0);
@@ -133,7 +136,7 @@ export function ProgressBar({
       aria-label="Story playback position"
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-valuenow={Math.round(shown * 100)}
+      aria-valuenow={Math.round(cursorShown * 100)}
       tabIndex={0}
       onMouseDown={(e) => startDrag(e.clientX)}
       onMouseMove={(e) => !dragging && setScrubFraction(fractionFromClientX(e.clientX))}
@@ -143,11 +146,11 @@ export function ProgressBar({
         if (e.key === 'ArrowLeft') onSeek?.(Math.max(0, progress - 0.05));
       }}
     >
-      <div className="progress-line-fill" style={{ width: `${shown * 100}%` }} />
+      <div className="progress-line-fill" style={{ width: `${fillShown * 100}%` }} />
       {scrubFraction !== null && (
         <div
           className="progress-line-cursor"
-          style={{ left: `${shown * 100}%` }}
+          style={{ left: `${cursorShown * 100}%` }}
         />
       )}
     </div>
